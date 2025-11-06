@@ -149,7 +149,7 @@
 ::  Deal initial hands (2 cards each)
 ++  deal-initial
   |=  deck=(list card)
-  ^-  [hand hand (list card)]
+  ^-  [(list hand) (list hand) (list card)]
   =/  player-card-1=card  (snag 0 deck)
   =/  dealer-card-1=card  (snag 1 deck)
   =/  player-card-2=card  (snag 2 deck)
@@ -157,7 +157,7 @@
   =/  player-hand=hand  ~[player-card-1 player-card-2]
   =/  dealer-hand=hand  ~[dealer-card-1 dealer-card-2]
   =/  remaining-deck=(list card)  (slag 4 deck)
-  [player-hand dealer-hand remaining-deck]
+  [~[player-hand] ~[dealer-hand] remaining-deck]
 ::
 ::  Draw one card (and remove it from the deck)
 ++  draw-card
