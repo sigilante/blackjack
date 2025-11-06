@@ -125,6 +125,13 @@ body {
     padding: 20px;
     min-height: 350px;
     display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.hands-area {
+    flex: 1;
+    display: flex;
     flex-direction: column;
     gap: 30px;
 }
@@ -154,8 +161,12 @@ body {
     height: 96px;
     background-image: url('img/sprites.png');
     background-repeat: no-repeat;
+    background-color: #016301;
     border: 1px solid var(--win31-black);
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
 
 /* Card back - using fifth card back */
@@ -234,20 +245,24 @@ body {
 .betting-area {
     background-color: var(--win31-gray);
     padding: 12px;
-    border-top: 2px solid var(--win31-white);
-    border-bottom: 2px solid var(--win31-dark-gray);
+    border: 2px solid;
+    border-color: var(--win31-white) var(--win31-black) var(--win31-black) var(--win31-white);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
+    width: 200px;
+    align-items: center;
 }
 
 .betting-label {
     font-weight: bold;
+    text-align: center;
 }
 
 .chips-container {
-    display: flex;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 45px);
+    gap: 8px;
     justify-content: center;
 }
 
@@ -264,6 +279,7 @@ body {
     background-image: url('img/sprites.png');
     background-position: -640px -481px;
     background-repeat: no-repeat;
+    background-color: #016301;
     position: relative;
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
@@ -278,6 +294,7 @@ body {
     height: 45px;
     background-image: url('img/sprites.png');
     background-repeat: no-repeat;
+    background-color: #016301;
     position: absolute;
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
@@ -292,6 +309,7 @@ body {
     position: relative;
     background-image: url('img/sprites.png');
     background-repeat: no-repeat;
+    background-color: #016301;
     border: none;
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;

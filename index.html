@@ -38,54 +38,56 @@
 
         <!-- Game Area -->
         <div class="game-area">
-            <!-- Dealer Hand -->
-            <div class="hand-section">
-                <div class="hand-label">Dealer</div>
-                <div id="dealer-hand" class="hand">
-                    <!-- Cards will be added here -->
+            <div class="hands-area">
+                <!-- Dealer Hand -->
+                <div class="hand-section">
+                    <div class="hand-label">Dealer</div>
+                    <div id="dealer-hand" class="hand">
+                        <!-- Cards will be added here -->
+                    </div>
+                    <div id="dealer-score" class="score"></div>
                 </div>
-                <div id="dealer-score" class="score"></div>
+
+                <!-- Player Hand -->
+                <div class="hand-section">
+                    <div class="hand-label">Player</div>
+                    <div id="player-hand" class="hand">
+                        <!-- Cards will be added here -->
+                    </div>
+                    <div id="player-score" class="score"></div>
+                </div>
             </div>
 
-            <!-- Player Hand -->
-            <div class="hand-section">
-                <div class="hand-label">Player</div>
-                <div id="player-hand" class="hand">
-                    <!-- Cards will be added here -->
+            <!-- Betting Area -->
+            <div class="betting-area">
+                <div class="betting-label">Place Your Bet:</div>
+                <div class="bet-display-container">
+                    <div class="bet-display" id="bet-display">
+                        <!-- Bet chips will be displayed here -->
+                    </div>
                 </div>
-                <div id="player-score" class="score"></div>
-            </div>
-        </div>
-
-        <!-- Betting Area -->
-        <div class="betting-area">
-            <div class="betting-label">Place Your Bet:</div>
-            <div class="chips-container" id="chips-container">
-                <button class="chip chip-1" onclick="placeBet(1)" data-value="1">
-                    <span class="chip-value">$1</span>
-                </button>
-                <button class="chip chip-5" onclick="placeBet(5)" data-value="5">
-                    <span class="chip-value">$5</span>
-                </button>
-                <button class="chip chip-10" onclick="placeBet(10)" data-value="10">
-                    <span class="chip-value">$10</span>
-                </button>
-                <button class="chip chip-25" onclick="placeBet(25)" data-value="25">
-                    <span class="chip-value">$25</span>
-                </button>
-                <button class="chip chip-50" onclick="placeBet(50)" data-value="50">
-                    <span class="chip-value">$50</span>
-                </button>
-                <button class="chip chip-100" onclick="placeBet(100)" data-value="100">
-                    <span class="chip-value">$100</span>
-                </button>
-            </div>
-            <div class="bet-display-container">
-                <div class="bet-display" id="bet-display">
-                    <!-- Bet chips will be displayed here -->
+                <div class="chips-container" id="chips-container">
+                    <button class="chip chip-1" onclick="placeBet(1)" data-value="1">
+                        <span class="chip-value">$1</span>
+                    </button>
+                    <button class="chip chip-5" onclick="placeBet(5)" data-value="5">
+                        <span class="chip-value">$5</span>
+                    </button>
+                    <button class="chip chip-10" onclick="placeBet(10)" data-value="10">
+                        <span class="chip-value">$10</span>
+                    </button>
+                    <button class="chip chip-25" onclick="placeBet(25)" data-value="25">
+                        <span class="chip-value">$25</span>
+                    </button>
+                    <button class="chip chip-50" onclick="placeBet(50)" data-value="50">
+                        <span class="chip-value">$50</span>
+                    </button>
+                    <button class="chip chip-100" onclick="placeBet(100)" data-value="100">
+                        <span class="chip-value">$100</span>
+                    </button>
                 </div>
+                <button class="bet-btn" onclick="clearBet()">Clear Bet</button>
             </div>
-            <button class="bet-btn" onclick="clearBet()">Clear Bet</button>
         </div>
 
         <!-- Action Buttons -->
@@ -93,6 +95,9 @@
             <button class="action-btn" id="deal-btn" onclick="dealHand()" disabled>Deal</button>
             <button class="action-btn" id="hit-btn" onclick="hit()" disabled>Hit</button>
             <button class="action-btn" id="stand-btn" onclick="stand()" disabled>Stand</button>
+            <button class="action-btn" id="double-btn" onclick="doubleDown()" disabled>Double Down</button>
+            <button class="action-btn" id="split-btn" onclick="split()" disabled>Split</button>
+            <button class="action-btn" id="surrender-btn" onclick="surrender()" disabled>Surrender</button>
             <button class="action-btn" id="cashout-btn" onclick="cashOut()" disabled>Cash Out</button>
         </div>
 

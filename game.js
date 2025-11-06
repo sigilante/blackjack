@@ -139,7 +139,7 @@ function updateBetDisplay() {
         const chipDiv = document.createElement('div');
         chipDiv.className = 'bet-display-chip';
         chipDiv.style.backgroundPosition = chipPositions[denom];
-        chipDiv.style.top = `${25 - index * 2}px`; // Stack chips with slight offset
+        chipDiv.style.top = `${25 - index * 4}px`; // Stack chips with double spacing
         chipDiv.style.zIndex = index;
         betDisplay.appendChild(chipDiv);
     });
@@ -222,6 +222,9 @@ function startNewGame() {
     document.getElementById('deal-btn').disabled = true;
     document.getElementById('hit-btn').disabled = true;
     document.getElementById('stand-btn').disabled = true;
+    document.getElementById('double-btn').disabled = true;
+    document.getElementById('split-btn').disabled = true;
+    document.getElementById('surrender-btn').disabled = true;
 
     updateDisplay();
     setStatus('New game started. Place your bet and click Deal.');
@@ -286,7 +289,29 @@ function dealHand() {
     document.getElementById('stand-btn').disabled = false;
     document.getElementById('deal-btn').disabled = true;
 
+    // Enable double down if player has enough money
+    if (gameState.bank >= gameState.currentBet) {
+        document.getElementById('double-btn').disabled = false;
+    }
+
+    // Enable surrender
+    document.getElementById('surrender-btn').disabled = false;
+
+    // Enable split if player has matching cards and enough money
+    if (gameState.playerHand.length === 2 &&
+        gameState.playerHand[0].rank === gameState.playerHand[1].rank &&
+        gameState.bank >= gameState.currentBet) {
+        document.getElementById('split-btn').disabled = false;
+    }
+
     setStatus('Your turn. Hit or Stand?');
+}
+
+// Disable special action buttons (double, split, surrender)
+function disableSpecialActions() {
+    document.getElementById('double-btn').disabled = true;
+    document.getElementById('split-btn').disabled = true;
+    document.getElementById('surrender-btn').disabled = true;
 }
 
 // Player hits
@@ -294,6 +319,9 @@ function hit() {
     if (!gameState.gameInProgress || gameState.dealerTurn) {
         return;
     }
+
+    // Disable special actions after first hit
+    disableSpecialActions();
 
     // Draw a card
     gameState.playerHand.push(gameState.deck.pop());
@@ -337,6 +365,92 @@ function stand() {
 // Player cashes out (placeholder for future implementation)
 function cashOut() {
     setStatus('Cash Out feature coming soon!');
+}
+
+// Player doubles down
+function doubleDown() {
+    if (!gameState.gameInProgress || gameState.dealerTurn) {
+        return;
+    }
+
+    // Check if player has enough money
+    if (gameState.bank < gameState.currentBet) {
+        setStatus('Insufficient funds to double down!');
+        return;
+    }
+
+    // Disable all action buttons except stand
+    disableSpecialActions();
+    document.getElementById('hit-btn').disabled = true;
+
+    // Double the bet
+    gameState.bank -= gameState.currentBet;
+    gameState.currentBet *= 2;
+    updateDisplay();
+
+    // Draw exactly one card
+    gameState.playerHand.push(gameState.deck.pop());
+    updateDisplay();
+
+    const playerValue = calculateHandValue(gameState.playerHand);
+
+    if (playerValue > 21) {
+        // Bust
+        gameState.dealerTurn = true;
+        updateDisplay();
+        resolveLoss('Player busts!');
+    } else {
+        // Automatically stand after double down
+        setStatus(`Doubled down to $${gameState.currentBet}. Score: ${playerValue}. Standing...`);
+        setTimeout(() => stand(), 1000);
+    }
+}
+
+// Player splits (basic implementation for same-rank cards)
+function split() {
+    if (!gameState.gameInProgress || gameState.dealerTurn) {
+        return;
+    }
+
+    // Check if split is valid
+    if (gameState.playerHand.length !== 2 ||
+        gameState.playerHand[0].rank !== gameState.playerHand[1].rank) {
+        setStatus('Cannot split - need two cards of same rank!');
+        return;
+    }
+
+    // Check if player has enough money
+    if (gameState.bank < gameState.currentBet) {
+        setStatus('Insufficient funds to split!');
+        return;
+    }
+
+    // For now, just show a message that split is not fully implemented
+    // Full implementation would require tracking multiple hands
+    setStatus('Split feature coming soon! (Requires multi-hand support)');
+    disableSpecialActions();
+}
+
+// Player surrenders
+function surrender() {
+    if (!gameState.gameInProgress || gameState.dealerTurn) {
+        return;
+    }
+
+    // Disable all action buttons
+    disableSpecialActions();
+    document.getElementById('hit-btn').disabled = true;
+    document.getElementById('stand-btn').disabled = true;
+
+    gameState.dealerTurn = true;
+
+    // Return half the bet
+    const halfBet = Math.floor(gameState.currentBet / 2);
+    gameState.bank += halfBet;
+    gameState.winLoss -= halfBet;
+
+    updateDisplay();
+    endRound(`Surrendered. Lost $${halfBet}.`);
 }
 
 // Dealer plays according to rules
@@ -400,6 +514,9 @@ function endRound(message) {
 
     document.getElementById('hit-btn').disabled = true;
     document.getElementById('stand-btn').disabled = true;
+    document.getElementById('double-btn').disabled = true;
+    document.getElementById('split-btn').disabled = true;
+    document.getElementById('surrender-btn').disabled = true;
 
     updateDisplay();
     setStatus(message + ' Place your bet for the next hand.');
