@@ -334,6 +334,11 @@ function stand() {
     setTimeout(playDealerHand, 1000);
 }
 
+// Player cashes out (placeholder for future implementation)
+function cashOut() {
+    setStatus('Cash Out feature coming soon!');
+}
+
 // Dealer plays according to rules
 function playDealerHand() {
     const dealerValue = calculateHandValue(gameState.dealerHand);
