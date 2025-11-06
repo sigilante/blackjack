@@ -97,9 +97,52 @@ function updateDisplay() {
     document.getElementById('current-bet').textContent = `$${gameState.currentBet}`;
     document.getElementById('win-loss').textContent = `$${gameState.winLoss >= 0 ? '+' : ''}${gameState.winLoss}`;
 
+    // Update bet display
+    updateBetDisplay();
+
     // Update hands
     updateHand('player');
     updateHand('dealer');
+}
+
+// Update the visual bet display with chips
+function updateBetDisplay() {
+    const betDisplay = document.getElementById('bet-display');
+    betDisplay.innerHTML = '';
+
+    if (gameState.currentBet === 0) {
+        return;
+    }
+
+    // Break down bet into chips (largest first)
+    let remaining = gameState.currentBet;
+    const chipDenominations = [100, 50, 25, 10, 5, 1];
+    const chipPositions = {
+        100: '-801px -525px',
+        50: '-756px -525px',
+        25: '-711px -525px',
+        10: '-801px -480px',
+        5: '-756px -480px',
+        1: '-711px -480px'
+    };
+
+    const chips = [];
+    for (const denom of chipDenominations) {
+        while (remaining >= denom) {
+            chips.push(denom);
+            remaining -= denom;
+        }
+    }
+
+    // Display chips stacked with slight offset
+    chips.forEach((denom, index) => {
+        const chipDiv = document.createElement('div');
+        chipDiv.className = 'bet-display-chip';
+        chipDiv.style.backgroundPosition = chipPositions[denom];
+        chipDiv.style.top = `${25 - index * 2}px`; // Stack chips with slight offset
+        chipDiv.style.zIndex = index;
+        betDisplay.appendChild(chipDiv);
+    });
 }
 
 // Update a specific hand display

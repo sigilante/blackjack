@@ -251,9 +251,42 @@ body {
     justify-content: center;
 }
 
+.bet-display-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.bet-display {
+    width: 71px;
+    height: 96px;
+    background-image: url('img/sprites.png');
+    background-position: -639px -480px;
+    background-repeat: no-repeat;
+    position: relative;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bet-display-chip {
+    width: 45px;
+    height: 45px;
+    background-image: url('img/sprites.png');
+    background-repeat: no-repeat;
+    position: absolute;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
 .chip {
-    width: 60px;
-    height: 60px;
+    width: 45px;
+    height: 45px;
     cursor: pointer;
     transition: transform 0.1s;
     position: relative;
@@ -277,29 +310,30 @@ body {
     transform: scale(0.95);
 }
 
-/* Chip sprite positions - chips at lower right of spritesheet */
+/* Chip sprite positions - 45x45 chips starting at (711, 480) in 2 rows x 3 columns */
+/* Row 1: 1, 5, 10 | Row 2: 25, 50, 100 */
 .chip-1 {
-    background-position: -639px -384px;
+    background-position: -711px -480px;
 }
 
 .chip-5 {
-    background-position: -710px -384px;
+    background-position: -756px -480px;
 }
 
 .chip-10 {
-    background-position: -781px -384px;
+    background-position: -801px -480px;
 }
 
 .chip-25 {
-    background-position: -852px -384px;
+    background-position: -711px -525px;
 }
 
 .chip-50 {
-    background-position: -639px -455px;
+    background-position: -756px -525px;
 }
 
 .chip-100 {
-    background-position: -710px -455px;
+    background-position: -801px -525px;
 }
 
 .bet-btn {
