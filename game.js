@@ -357,7 +357,7 @@ function endRound(message) {
     setStatus(message + ' Place your bet for the next hand.');
 
     // Check if player has enough money to continue
-    if (gameState.bank < 5) {
+    if (gameState.bank < 1) {
         setStatus(message + ' Game over! You\'re out of money. Click New Game to restart.');
     }
 }

@@ -158,9 +158,9 @@ body {
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Card back */
+/* Card back - using fifth card back */
 .card.back {
-    background-position: 0 -288px; /* Assuming card back is at row 3 */
+    background-position: -284px -384px; /* Fifth card back position */
 }
 
 /* Card positions in spritesheet (71x96 each) */
@@ -254,28 +254,19 @@ body {
 .chip {
     width: 60px;
     height: 60px;
-    border-radius: 50%;
-    border: 4px solid;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 11px;
     transition: transform 0.1s;
     position: relative;
+    background-image: url('img/sprites.png');
+    background-repeat: no-repeat;
+    border: none;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
 
-.chip::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 70%;
-    height: 70%;
-    border-radius: 50%;
-    border: 2px dashed rgba(255, 255, 255, 0.3);
+.chip .chip-value {
+    display: none;
 }
 
 .chip:hover {
@@ -286,28 +277,29 @@ body {
     transform: scale(0.95);
 }
 
+/* Chip sprite positions - chips at lower right of spritesheet */
+.chip-1 {
+    background-position: -639px -384px;
+}
+
 .chip-5 {
-    background: linear-gradient(135deg, #ff4444, #cc0000);
-    border-color: #660000;
-    color: white;
+    background-position: -710px -384px;
+}
+
+.chip-10 {
+    background-position: -781px -384px;
 }
 
 .chip-25 {
-    background: linear-gradient(135deg, #44ff44, #00cc00);
-    border-color: #006600;
-    color: white;
+    background-position: -852px -384px;
+}
+
+.chip-50 {
+    background-position: -639px -455px;
 }
 
 .chip-100 {
-    background: linear-gradient(135deg, #4444ff, #0000cc);
-    border-color: #000066;
-    color: white;
-}
-
-.chip-500 {
-    background: linear-gradient(135deg, #ffaa00, #cc6600);
-    border-color: #663300;
-    color: white;
+    background-position: -710px -455px;
 }
 
 .bet-btn {

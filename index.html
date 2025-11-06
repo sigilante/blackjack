@@ -18,8 +18,6 @@
         <!-- Toolbar -->
         <div class="toolbar">
             <button class="toolbar-btn" id="new-game-btn" onclick="startNewGame()">New Game</button>
-            <div class="separator"></div>
-            <button class="toolbar-btn" id="deal-btn" onclick="dealHand()" disabled>Deal</button>
         </div>
 
         <!-- Game Info -->
@@ -63,17 +61,23 @@
         <div class="betting-area">
             <div class="betting-label">Place Your Bet:</div>
             <div class="chips-container" id="chips-container">
+                <button class="chip chip-1" onclick="placeBet(1)" data-value="1">
+                    <span class="chip-value">$1</span>
+                </button>
                 <button class="chip chip-5" onclick="placeBet(5)" data-value="5">
                     <span class="chip-value">$5</span>
+                </button>
+                <button class="chip chip-10" onclick="placeBet(10)" data-value="10">
+                    <span class="chip-value">$10</span>
                 </button>
                 <button class="chip chip-25" onclick="placeBet(25)" data-value="25">
                     <span class="chip-value">$25</span>
                 </button>
+                <button class="chip chip-50" onclick="placeBet(50)" data-value="50">
+                    <span class="chip-value">$50</span>
+                </button>
                 <button class="chip chip-100" onclick="placeBet(100)" data-value="100">
                     <span class="chip-value">$100</span>
-                </button>
-                <button class="chip chip-500" onclick="placeBet(500)" data-value="500">
-                    <span class="chip-value">$500</span>
                 </button>
             </div>
             <button class="bet-btn" onclick="clearBet()">Clear Bet</button>
@@ -81,6 +85,7 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
+            <button class="action-btn" id="deal-btn" onclick="dealHand()" disabled>Deal</button>
             <button class="action-btn" id="hit-btn" onclick="hit()" disabled>Hit</button>
             <button class="action-btn" id="stand-btn" onclick="stand()" disabled>Stand</button>
         </div>
