@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <div class="window">
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <div class="menu-item">Game</div>
+            <div class="menu-item">Help</div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="toolbar-btn" id="new-game-btn" onclick="startNewGame()">New Game</button>
+            <div class="separator"></div>
+            <button class="toolbar-btn" id="deal-btn" onclick="dealHand()" disabled>Deal</button>
+        </div>
+
+        <!-- Game Info -->
+        <div class="game-info">
+            <div class="info-section">
+                <span class="info-label">Bank:</span>
+                <span id="bank-amount" class="info-value">$1000</span>
+            </div>
+            <div class="info-section">
+                <span class="info-label">Current Bet:</span>
+                <span id="current-bet" class="info-value">$0</span>
+            </div>
+            <div class="info-section">
+                <span class="info-label">Win/Loss:</span>
+                <span id="win-loss" class="info-value">$0</span>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="game-area">
+            <!-- Dealer Hand -->
+            <div class="hand-section">
+                <div class="hand-label">Dealer</div>
+                <div id="dealer-hand" class="hand">
+                    <!-- Cards will be added here -->
+                </div>
+                <div id="dealer-score" class="score"></div>
+            </div>
+
+            <!-- Player Hand -->
+            <div class="hand-section">
+                <div class="hand-label">Player</div>
+                <div id="player-hand" class="hand">
+                    <!-- Cards will be added here -->
+                </div>
+                <div id="player-score" class="score"></div>
+            </div>
+        </div>
+
+        <!-- Betting Area -->
+        <div class="betting-area">
+            <div class="betting-label">Place Your Bet:</div>
+            <div class="chips-container" id="chips-container">
+                <button class="chip chip-5" onclick="placeBet(5)" data-value="5">
+                    <span class="chip-value">$5</span>
+                </button>
+                <button class="chip chip-25" onclick="placeBet(25)" data-value="25">
+                    <span class="chip-value">$25</span>
+                </button>
+                <button class="chip chip-100" onclick="placeBet(100)" data-value="100">
+                    <span class="chip-value">$100</span>
+                </button>
+                <button class="chip chip-500" onclick="placeBet(500)" data-value="500">
+                    <span class="chip-value">$500</span>
+                </button>
+            </div>
+            <button class="bet-btn" onclick="clearBet()">Clear Bet</button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-btn" id="hit-btn" onclick="hit()" disabled>Hit</button>
+            <button class="action-btn" id="stand-btn" onclick="stand()" disabled>Stand</button>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span id="status-message">Welcome to Blackjack! Place your bet and click Deal.</span>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
