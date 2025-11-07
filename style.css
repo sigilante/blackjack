@@ -159,7 +159,7 @@ body {
 .card {
     width: 71px;
     height: 96px;
-    background-image: url('/static/sprites.png');
+    background-image: url('/blackjack/img/sprites.png');
     background-repeat: no-repeat;
     border: none;
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
@@ -287,7 +287,7 @@ body {
 .bet-display {
     width: 71px;
     height: 96px;
-    background-image: url('/static/sprites.png');
+    background-image: url('/blackjack/img/sprites.png');
     background-position: -640px -481px;
     background-repeat: no-repeat;
     position: relative;
@@ -303,7 +303,7 @@ body {
 .bet-display-chip {
     width: 45px;
     height: 45px;
-    background-image: url('/static/sprites.png');
+    background-image: url('/blackjack/img/sprites.png');
     background-repeat: no-repeat;
     position: absolute;
     image-rendering: pixelated;
@@ -317,7 +317,7 @@ body {
     cursor: pointer;
     transition: transform 0.1s;
     position: relative;
-    background-image: url('/static/sprites.png');
+    background-image: url('/blackjack/img/sprites.png');
     background-repeat: no-repeat;
     border: none;
     image-rendering: pixelated;
