@@ -62,10 +62,13 @@
     ?+    method  [~[[%res ~ %400 ~ ~]] state]
       ::
         %'GET'
-      ?+    uri  [~[[%res ~ %404 ~ ~]] state]
+      ?+    uri
+        ~&  "No route matched, returning 404 for: {<uri>}"
+        [~[[%res ~ %404 ~ ~]] state]
         ::
           :: Serve index.html at /blackjack
           [%blackjack ~]
+        ~&  "Matched route: /blackjack (index.html)"
         :_  state
         ^-  (list effect:http)
         :_  ~
@@ -78,6 +81,7 @@
         ::
           :: Serve style.css at /blackjack/style.css
           [%blackjack %'style.css' ~]
+        ~&  "Matched route: /blackjack/style.css"
         :_  state
         :_  ~
         ^-  effect:http
@@ -89,6 +93,7 @@
         ::
           :: Serve game.js at /blackjack/game.js
           [%blackjack %'game.js' ~]
+        ~&  "Matched route: /blackjack/game.js"
         :_  state
         :_  ~
         ^-  effect:http
