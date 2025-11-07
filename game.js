@@ -290,7 +290,7 @@ async function dealHand() {
         // Update game state from server
         gameState.gameInProgress = true;
         gameState.dealerTurn = false;
-        gameState.bank -= gameState.currentBet;
+        gameState.bank = data.bank;  // Use bank from server (already has bet deducted)
 
         // Parse hands from server response
         // Server returns hands as arrays of cards directly

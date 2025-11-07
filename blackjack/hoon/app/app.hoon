@@ -216,7 +216,7 @@
         ~&  "Updated game - current-bet: {<current-bet.updated-game>}, bank: {<bank.updated-game>}"
         ::
         =/  json=tape
-          (make-json-deal:blackjack player-hand dealer-hand player-score dealer-visible session-id)
+          (make-json-deal:blackjack player-hand dealer-hand player-score dealer-visible session-id new-bank)
         ::
         :_  state(games (~(put by games.state) session-id updated-game))
         :_  ~

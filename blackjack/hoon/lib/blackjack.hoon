@@ -230,7 +230,7 @@
   "}"
 ::
 ++  make-json-deal
-  |=  [player=(list hand) dealer=(list hand) score=@ud visible=card sid=@ud]
+  |=  [player=(list hand) dealer=(list hand) score=@ud visible=card sid=@ud bank=@ud]
   ^-  tape
   ;:  weld
     "\{\"playerHand\":"
@@ -243,6 +243,8 @@
     (card-to-json visible)
     ",\"sessionId\":"
     (a-co:co sid)
+    ",\"bank\":"
+    (a-co:co bank)
   "}"
   ==
 ::
