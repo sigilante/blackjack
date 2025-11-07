@@ -293,10 +293,9 @@ async function dealHand() {
         gameState.bank -= gameState.currentBet;
 
         // Parse hands from server response
-        // Server returns playerHand as list of lists, we want first hand
-        gameState.playerHand = data.playerHand[0] || [];
-        // Dealer hand - hide hole card (second card)
-        gameState.dealerHand = data.dealerHand[0] || [];
+        // Server returns hands as arrays of cards directly
+        gameState.playerHand = data.playerHand || [];
+        gameState.dealerHand = data.dealerHand || [];
 
         updateDisplay();
 
