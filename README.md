@@ -2,12 +2,14 @@
 
 A browser-based blackjack game with Windows 3.1 aesthetic, built with HTMX.
 
+![](./img/header.png)
+
 ## Development Stages
 
 This project will be developed in four stages:
 
-1. **Browser-based game** (Current) - Supports hit, stand, and resolve for players and house with bet tracking
-2. NockApp backend - Server with deck shuffling
+1. Browser-based game - Supports hit, stand, and resolve for players and house with bet tracking
+2. **NockApp backend** (Current) - Server with deck shuffling
 3. Nockchain wallet integration - Fakenet wallet support
 4. Enhanced gameplay - Additional play options
 
@@ -24,14 +26,26 @@ This project will be developed in four stages:
 
 ## How to Play
 
-1. Start a local web server:
+0. Clone the repository:
+
    ```bash
-   python3 server.py
+   git clone https://github.com/sigilante/blackjack.git
+   cd blackjack
    ```
 
-2. Open your browser to `http://localhost:8000/`
+1. Download and install [Nockup](https://github.com/sigilante/nockup).
+
+2. Build and run the NockApp server:
+
+   ```bash
+   nockup build
+   nockup run
+   ```
+
+2. Open your browser to `http://127.0.0.1:8080/` (or the address shown in your terminal).
 
 3. Game flow:
+
    - Click chips to place your bet
    - Click "Deal" to start the hand
    - Click "Hit" to draw another card or "Stand" to hold
