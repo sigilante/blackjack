@@ -75,7 +75,7 @@
             (to-octs:http q.index)
         ==
         ::
-          :: Serve style.css
+          :: Serve style.css at /blackjack/style.css
           [%blackjack %'style.css' ~]
         :_  state
         :_  ~
@@ -86,7 +86,7 @@
             (to-octs:http q.style)
         ==
         ::
-          :: Serve game.js
+          :: Serve game.js at /blackjack/game.js
           [%blackjack %'game.js' ~]
         :_  state
         :_  ~
