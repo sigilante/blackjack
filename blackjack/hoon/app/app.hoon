@@ -82,11 +82,10 @@
             (to-octs:http q.index)
         ==
         ::
-          :: Serve style.css at /blackjack/style.css
-          [%blackjack %'style.css' ~]
-        ~&  "Matched route: /blackjack/style.css"
+          :: Serve style.css at /static/blackjack.css
+          [%static %'blackjack.css' ~]
+        ~&  "Matched route: /static/blackjack.css"
         ~&  "CSS length: {<(met 3 q.style)>} bytes"
-        ~&  "CSS first 50 chars: {<(end [3 50] q.style)>}"
         :_  state
         :_  ~
         ^-  effect:http
@@ -99,11 +98,10 @@
             (to-octs:http q.style)
         ==
         ::
-          :: Serve game.js at /blackjack/game.js
-          [%blackjack %'game.js' ~]
-        ~&  "Matched route: /blackjack/game.js"
+          :: Serve game.js at /static/blackjack.js
+          [%static %'blackjack.js' ~]
+        ~&  "Matched route: /static/blackjack.js"
         ~&  "JS length: {<(met 3 q.game)>} bytes"
-        ~&  "JS first 50 chars: {<(end [3 50] q.game)>}"
         :_  state
         :_  ~
         ^-  effect:http
@@ -116,8 +114,9 @@
             (to-octs:http q.game)
         ==
         ::
-          :: Serve sprites.png at /blackjack/img/sprites.png
-          [%blackjack %img %'sprites.png' ~]
+          :: Serve sprites.png at /static/sprites.png
+          [%static %'sprites.png' ~]
+        ~&  "Matched route: /static/sprites.png"
         :_  state
         :_  ~
         ^-  effect:http
