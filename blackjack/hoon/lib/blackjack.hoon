@@ -1,5 +1,7 @@
 ::  blackjack/lib/blackjack-static.hoon
 ::
+/=  ztd  /common/ztd/three
+::
 ::  blackjack/sur/blackjack.hoon
 ::  Data structures for blackjack game
 ::
@@ -50,33 +52,22 @@
 ++  shuffle-deck
   |=  [deck=(list card) eny=@uvJ]
   ^-  (list card)
-  :: |*  [a=(list) eny=@uvJ]
-  deck
-  :: =/  n  (lent deck)
-  :: =/  i  0
-  :: =/  rng  ~(. tog eny)
-  :: |-  ^-  (list _?>(?=(^ deck) i.deck))
-  :: ?:  =(n i)  deck
-  :: =^  r  rng  (rads:rng n)
-  :: =/  i1  (snag i deck)
-  :: =/  i2  (snag r deck)
-  :: =.  deck  (snap deck i i2)
-  :: =.  deck  (snap deck r i1)
-  :: $(i +(i))
-  :: =/  remaining=(list card)  deck
-  :: =/  shuffled=(list card)  ~
-  :: =/  rng  ~(. og eny)
-  :: ::
-  :: |-  ^-  (list card)
-  :: ?~  remaining  shuffled
-  :: =/  len=@ud  (lent remaining)
-  :: ?:  =(len 1)  (weld shuffled remaining)
-  :: =^  index  rng  (rads:rng len)
-  :: =/  chosen=card  (snag index remaining)
-  :: =/  new-remaining=(list card)
-  ::   (weld (scag index remaining) (slag +(index) remaining))
-  :: ::
-  :: $(remaining new-remaining, shuffled [chosen shuffled])
+  =/  n  (lent deck)
+  =/  remaining=(list card)  deck
+  =/  shuffled=(list card)  ~
+  ~&  remaining+remaining
+  ~&  >  shuffled+shuffled
+  =/  rng  ~(. tog:tip5:ztd (reap 16 eny))
+  |-  ^-  (list card)
+  ?:  =(~ remaining)  shuffled
+  =/  len=@ud  (lent remaining)
+  ?:  =(len 1)  (weld shuffled remaining)
+  =^  index=@  rng  (index:rng (lent remaining))
+  ~&  >  index+index
+  =/  chosen=card  (snag index remaining)
+  =/  new-remaining=(list card)
+    (weld (scag index remaining) (slag +(index) remaining))
+  $(remaining new-remaining, shuffled `(list card)`[chosen shuffled])
 ::
 ::  Calculate hand value (handle aces)
 ++  calculate-hand-value
