@@ -168,10 +168,14 @@
         ?~  body
           [~[[%res ~ %400 ~ ~]] state]
         =/  body-text=tape  (trip q.u.body)
+        ~&  "Deal body: {<body-text>}"
         =/  session-id-parsed=(unit @ud)  (parse-json-number:blackjack "sessionId" body-text)
         =/  bet-parsed=(unit @ud)  (parse-json-number:blackjack "bet" body-text)
+        ~&  "Parsed sessionId: {<session-id-parsed>}"
+        ~&  "Parsed bet: {<bet-parsed>}"
         =/  session-id=@ud  ?~(session-id-parsed 0 u.session-id-parsed)
         =/  bet=@ud  ?~(bet-parsed 100 u.bet-parsed)
+        ~&  "Using sessionId: {<session-id>}, bet: {<bet>}"
         ::
         ::  Get or create game state
         =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
@@ -209,6 +213,7 @@
         ::  Update game state with bet deducted
         =/  updated-game=game-state:blackjack
           current-game(deck remaining-deck, player-hand player-hand, dealer-hand dealer-hand, current-bet bet, bank new-bank, game-in-progress %.y, dealer-turn %.n)
+        ~&  "Updated game - current-bet: {<current-bet.updated-game>}, bank: {<bank.updated-game>}"
         ::
         =/  json=tape
           (make-json-deal:blackjack player-hand dealer-hand player-score dealer-visible session-id)
@@ -279,9 +284,13 @@
           $(final-dealer-hand (snoc final-dealer-hand new-card), remaining-deck new-deck)
         ::
         ::  Resolve outcome
+        ~&  "Stand - current-bet: {<current-bet.current-game>}, bank: {<bank.current-game>}"
         =+  [outcome multiplier]=(resolve-outcome:blackjack (snag 0 player-hand.current-game) final-dealer-hand)
+        ~&  "Outcome: {<outcome>}, multiplier: {<multiplier>}"
         =/  payout=@ud  (mul current-bet.current-game multiplier)
+        ~&  "Payout: {<payout>}"
         =/  new-bank=@ud  (add bank.current-game payout)
+        ~&  "New bank: {<new-bank>}"
         =/  dealer-score=@ud  (hand-value:blackjack final-dealer-hand)
         ::
         ::  Update game
