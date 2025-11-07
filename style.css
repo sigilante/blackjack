@@ -161,12 +161,12 @@ body {
     height: 96px;
     background-image: url('img/sprites.png');
     background-repeat: no-repeat;
-    background-color: #016301;
-    border: 1px solid var(--win31-black);
+    border: none;
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
+    filter: drop-shadow(0 0 0 transparent);
 }
 
 /* Card back - using fifth card back */
@@ -259,6 +259,17 @@ body {
     text-align: center;
 }
 
+.bet-amount-display {
+    background-color: var(--win31-white);
+    border: 2px solid;
+    border-color: var(--win31-dark-gray) var(--win31-white) var(--win31-white) var(--win31-dark-gray);
+    padding: 4px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    min-width: 100px;
+}
+
 .chips-container {
     display: grid;
     grid-template-columns: repeat(3, 45px);
@@ -279,7 +290,6 @@ body {
     background-image: url('img/sprites.png');
     background-position: -640px -481px;
     background-repeat: no-repeat;
-    background-color: #016301;
     position: relative;
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
@@ -287,6 +297,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.3));
 }
 
 .bet-display-chip {
@@ -294,7 +305,6 @@ body {
     height: 45px;
     background-image: url('img/sprites.png');
     background-repeat: no-repeat;
-    background-color: #016301;
     position: absolute;
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
@@ -309,11 +319,11 @@ body {
     position: relative;
     background-image: url('img/sprites.png');
     background-repeat: no-repeat;
-    background-color: #016301;
     border: none;
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .chip .chip-value {
