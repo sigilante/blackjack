@@ -63,9 +63,8 @@
         %'GET'
       ?+    uri  [~[[%res ~ %404 ~ ~]] state]
         ::
-          :: Serve index.html
-          [~]
-          :: [%blackjack ~]
+          :: Serve index.html at /blackjack
+          [%blackjack ~]
         :_  state
         ^-  (list effect:http)
         :_  ~
@@ -77,7 +76,7 @@
         ==
         ::
           :: Serve style.css
-          [%'style.css' ~]
+          [%blackjack %'style.css' ~]
         :_  state
         :_  ~
         ^-  effect:http
@@ -88,7 +87,7 @@
         ==
         ::
           :: Serve game.js
-          [%'game.js' ~]
+          [%blackjack %'game.js' ~]
         :_  state
         :_  ~
         ^-  effect:http
@@ -98,8 +97,8 @@
             (to-octs:http q.game)
         ==
         ::
-          :: Serve sprites.png
-          [%'sprites.png' ~]
+          :: Serve sprites.png at /blackjack/img/sprites.png
+          [%blackjack %img %'sprites.png' ~]
         :_  state
         :_  ~
         ^-  effect:http
