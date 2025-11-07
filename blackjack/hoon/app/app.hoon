@@ -47,6 +47,9 @@
   ++  poke
     |=  =ovum:moat
     ^-  [(list effect:http) server-state]
+    ::  Extract entropy from poke input
+    =/  entropy=@  eny.input.ovum
+    ::  Parse HTTP request
     =/  sof-cau=(unit cause:http)  ((soft cause:http) cause.input.ovum)
     ?~  sof-cau
       ~&  "cause incorrectly formatted!"
@@ -200,10 +203,10 @@
         ::  Deduct bet from bank
         =/  new-bank=@ud  (sub bank.current-game bet)
         ::
-        ::  Create and shuffle deck
+        ::  Create and shuffle deck with entropy
         =/  fresh-deck=(list card:blackjack)  create-deck:blackjack
         =/  shuffled-deck=(list card:blackjack)
-          (shuffle-deck:blackjack fresh-deck `@uvJ`42)
+          (shuffle-deck:blackjack fresh-deck `@uvJ`entropy)
         ::
         ::  Deal initial hands
         =+  [player-hand dealer-hand remaining-deck]=(deal-initial:blackjack shuffled-deck)
