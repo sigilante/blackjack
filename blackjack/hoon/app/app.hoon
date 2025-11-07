@@ -57,6 +57,7 @@
       +.u.sof-cau
     ~&  "Received request: {<method>} {<uri>}"
     =/  uri=path  (pa:dejs:http [%s uri])
+    ~&  "Parsed path: {<uri>}"
     ::  Handle GET/POST requests
     ?+    method  [~[[%res ~ %400 ~ ~]] state]
       ::
