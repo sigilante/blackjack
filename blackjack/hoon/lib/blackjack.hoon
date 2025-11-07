@@ -259,7 +259,7 @@
   %+  weld  ",\"dealerScore\":"
   %+  weld  (a-co:co score)
   %+  weld  ",\"outcome\":\""
-  %+  weld  (a-co:co outcome)
+  %+  weld  (trip (scot %tas outcome))
   %+  weld  "\",\"payout\":"
   %+  weld  (a-co:co payout)
   %+  weld  ",\"bank\":"
