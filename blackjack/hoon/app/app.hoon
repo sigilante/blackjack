@@ -145,14 +145,14 @@
           :*  deck=*(list card:blackjack)
               player-hand=*(list (list card:blackjack))
               dealer-hand=*(list (list card:blackjack))
-              bank=1.000
+              bank=1000
               current-bet=0
               win-loss=--0
               game-in-progress=%.n
               dealer-turn=%.n
           ==
         =/  json=tape
-          (make-json-new-game:blackjack session-id 1.000)
+          (make-json-new-game:blackjack session-id 1000)
         ~&  "Sending JSON response: {<json>}"
         :_  state(games (~(put by games.state) session-id new-game), next-session-id +(next-session-id.state))
         :_  ~
@@ -176,7 +176,7 @@
             :*  deck=*(list card:blackjack)
                 player-hand=*(list (list card:blackjack))
                 dealer-hand=*(list (list card:blackjack))
-                bank=1.000
+                bank=1000
                 current-bet=0
                 win-loss=--0
                 game-in-progress=%.n
