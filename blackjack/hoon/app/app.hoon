@@ -153,6 +153,7 @@
           ==
         =/  json=tape
           (make-json-new-game:blackjack session-id 1.000)
+        ~&  "Sending JSON response: {<json>}"
         :_  state(games (~(put by games.state) session-id new-game), next-session-id +(next-session-id.state))
         :_  ~
         ^-  effect:http
