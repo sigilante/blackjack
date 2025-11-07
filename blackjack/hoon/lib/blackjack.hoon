@@ -190,11 +190,31 @@
   [%push 1]
 ::
 ::
+::  JSON parsing helpers
+++  parse-json-number
+  |=  [key=tape json-text=tape]
+  ^-  (unit @ud)
+  ::  Find the key in the JSON
+  =/  key-str=tape  (weld "\"" (weld key "\":"))
+  =/  idx=(unit @ud)  (find key-str json-text)
+  ?~  idx  ~
+  ::  Skip past the key and colon
+  =/  remaining=tape  (slag (add u.idx (lent key-str)) json-text)
+  ::  Extract digits
+  =/  digits=tape
+    |-  ^-  tape
+    ?~  remaining  ~
+    ?:  ?&  (gte i.remaining '0')  (lte i.remaining '9')  ==
+      [i.remaining $(remaining t.remaining)]
+    ~
+  ?~  digits  ~
+  `(rash (crip digits) dem)
+::
 ::  JSON encoding helpers
 ++  card-to-json
   |=  c=card
   ^-  tape
-  (weld "\{\"suit\":\"" (weld (trip (scot %tas suit.c)) (weld "\",\"rank\":\"" (weld (trip (scot %tas rank.c)) "\"}"))))
+  (weld "\{\"suit\":\"" (weld (scow %tas suit.c) (weld "\",\"rank\":\"" (weld (scow %tas rank.c) "\"}"))))
 ::
 ++  hand-to-json
   |=  h=hand
@@ -250,7 +270,7 @@
   %+  weld  ",\"dealerScore\":"
   %+  weld  (a-co:co score)
   %+  weld  ",\"outcome\":\""
-  %+  weld  (trip (scot %tas outcome))
+  %+  weld  (scow %tas outcome)
   %+  weld  "\",\"payout\":"
   %+  weld  (a-co:co payout)
   %+  weld  ",\"bank\":"

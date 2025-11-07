@@ -164,9 +164,14 @@
         ==
         ::  Deal initial hands
           [%blackjack %api %deal ~]
-        ::  Parse body to get session-id
-        :: =/  body=@t  q.body.request.req
-        =/  session-id=@ud  0  ::  TODO: Parse from JSON body
+        ::  Parse body to get session-id and bet
+        ?~  body
+          [~[[%res ~ %400 ~ ~]] state]
+        =/  body-text=tape  (trip q.u.body)
+        =/  session-id-parsed=(unit @ud)  (parse-json-number:blackjack "sessionId" body-text)
+        =/  bet-parsed=(unit @ud)  (parse-json-number:blackjack "bet" body-text)
+        =/  session-id=@ud  ?~(session-id-parsed 0 u.session-id-parsed)
+        =/  bet=@ud  ?~(bet-parsed 100 u.bet-parsed)
         ::
         ::  Get or create game state
         =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
@@ -184,6 +189,13 @@
             ==
           u.existing
         ::
+        ::  Check if player can afford the bet
+        ?:  (gth bet bank.current-game)
+          [~[[%res ~ %400 ~ ~]] state]
+        ::
+        ::  Deduct bet from bank
+        =/  new-bank=@ud  (sub bank.current-game bet)
+        ::
         ::  Create and shuffle deck
         =/  fresh-deck=(list card:blackjack)  create-deck:blackjack
         =/  shuffled-deck=(list card:blackjack)
@@ -194,9 +206,9 @@
         =/  player-score=@ud  (hand-value:blackjack (snag 0 player-hand))
         =/  dealer-visible=card:blackjack  (snag 1 (snag 0 dealer-hand))
         ::
-        ::  Update game state
+        ::  Update game state with bet deducted
         =/  updated-game=game-state:blackjack
-          current-game(deck remaining-deck, player-hand player-hand, dealer-hand dealer-hand, game-in-progress %.y, dealer-turn %.n)
+          current-game(deck remaining-deck, player-hand player-hand, dealer-hand dealer-hand, current-bet bet, bank new-bank, game-in-progress %.y, dealer-turn %.n)
         ::
         =/  json=tape
           (make-json-deal:blackjack player-hand dealer-hand player-score dealer-visible session-id)
@@ -212,8 +224,11 @@
         ::
           [%blackjack %api %hit ~]
         ::  Player hits (draw card)
-        :: =/  body=@t  q.body.request.req
-        =/  session-id=@ud  0  ::  TODO: Parse from JSON
+        ?~  body
+          [~[[%res ~ %400 ~ ~]] state]
+        =/  body-text=tape  (trip q.u.body)
+        =/  session-id-parsed=(unit @ud)  (parse-json-number:blackjack "sessionId" body-text)
+        =/  session-id=@ud  ?~(session-id-parsed 0 u.session-id-parsed)
         ::
         =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
         ?~  existing
@@ -244,8 +259,11 @@
         ::
           [%blackjack %api %stand ~]
         ::  Player stands, dealer plays
-        :: =/  body=@t  q.body.request.req
-        =/  session-id=@ud  0  ::  TODO: Parse from JSON
+        ?~  body
+          [~[[%res ~ %400 ~ ~]] state]
+        =/  body-text=tape  (trip q.u.body)
+        =/  session-id-parsed=(unit @ud)  (parse-json-number:blackjack "sessionId" body-text)
+        =/  session-id=@ud  ?~(session-id-parsed 0 u.session-id-parsed)
         ::
         =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
         ?~  existing
