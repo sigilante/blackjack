@@ -75,6 +75,9 @@
         ^-  effect:http
         :*  %res  id  %200
             :~  ['Content-Type' 'text/html']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+                ['Pragma' 'no-cache']
+                ['Expires' '0']
             ==
             (to-octs:http q.index)
         ==
@@ -89,6 +92,9 @@
         ^-  effect:http
         :*  %res  id=id  %200
             :~  ['Content-Type' 'text/css']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+                ['Pragma' 'no-cache']
+                ['Expires' '0']
             ==
             (to-octs:http q.style)
         ==
@@ -103,6 +109,9 @@
         ^-  effect:http
         :*  %res  id=id  %200
             :~  ['Content-Type' 'text/javascript']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+                ['Pragma' 'no-cache']
+                ['Expires' '0']
             ==
             (to-octs:http q.game)
         ==
@@ -114,6 +123,9 @@
         ^-  effect:http
         :*  %res  id=id  %200
             :~  ['Content-Type' 'image/png']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+                ['Pragma' 'no-cache']
+                ['Expires' '0']
             ==
             (to-octs:http q.sprites)
         ==
