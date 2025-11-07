@@ -64,7 +64,8 @@
       ?+    uri  [~[[%res ~ %404 ~ ~]] state]
         ::
           :: Serve index.html
-          [%blackjack ~]
+          [~]
+          :: [%blackjack ~]
         :_  state
         ^-  (list effect:http)
         :_  ~
@@ -76,7 +77,7 @@
         ==
         ::
           :: Serve style.css
-          [%blackjack %'style.css' ~]
+          [%'style.css' ~]
         :_  state
         :_  ~
         ^-  effect:http
@@ -87,7 +88,7 @@
         ==
         ::
           :: Serve game.js
-          [%blackjack %'game.js' ~]
+          [%'game.js' ~]
         :_  state
         :_  ~
         ^-  effect:http
@@ -98,7 +99,7 @@
         ==
         ::
           :: Serve sprites.png
-          [%blackjack %'sprites.png' ~]
+          [%'sprites.png' ~]
         :_  state
         :_  ~
         ^-  effect:http
