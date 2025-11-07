@@ -1,12 +1,12 @@
 [package]
-name = "http-server"
+name = "blackjack"
 version = "0.1.0"
 edition = "2021"
 authors = ["N. E. Davis <neal@zorp.io>"]
 description = "A NockApp project"
 
 [[bin]]
-name = "http-server"
+name = "blackjack"
 path = "src/main.rs"
 
 [dependencies]
