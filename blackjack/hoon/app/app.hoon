@@ -82,6 +82,8 @@
           :: Serve style.css at /blackjack/style.css
           [%blackjack %'style.css' ~]
         ~&  "Matched route: /blackjack/style.css"
+        ~&  "CSS length: {<(met 3 q.style)>} bytes"
+        ~&  "CSS first 50 chars: {<(end [3 50] q.style)>}"
         :_  state
         :_  ~
         ^-  effect:http
@@ -94,6 +96,8 @@
           :: Serve game.js at /blackjack/game.js
           [%blackjack %'game.js' ~]
         ~&  "Matched route: /blackjack/game.js"
+        ~&  "JS length: {<(met 3 q.game)>} bytes"
+        ~&  "JS first 50 chars: {<(end [3 50] q.game)>}"
         :_  state
         :_  ~
         ^-  effect:http
