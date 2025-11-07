@@ -38,8 +38,8 @@ This project will be developed in four stages:
 2. Build and run the NockApp server:
 
    ```bash
-   nockup build
-   nockup run
+   nockup build blackjack
+   nockup run blackjack
    ```
 
 2. Open your browser to `http://127.0.0.1:8080/` (or the address shown in your terminal).
