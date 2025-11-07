@@ -76,7 +76,7 @@
         ==
         ::
           :: Serve style.css
-          [%'style.css' ~]
+          [%blackjack %'style.css' ~]
         :_  state
         :_  ~
         ^-  effect:http
@@ -87,7 +87,7 @@
         ==
         ::
           :: Serve game.js
-          [%'game.js' ~]
+          [%blackjack %'game.js' ~]
         :_  state
         :_  ~
         ^-  effect:http
@@ -166,110 +166,94 @@
         =+  [player-hand dealer-hand remaining-deck]=(deal-initial:blackjack shuffled-deck)
         =/  player-score=@ud  (hand-value:blackjack (snag 0 player-hand))
         =/  dealer-visible=card:blackjack  (snag 1 (snag 0 dealer-hand))
-        :: =/  player-hand  ;;((list card:blackjack) player-hand)
-        :: =/  dealer-hand  ;;((list card:blackjack) dealer-hand)
-        :: =/  remaining-deck  ;;((list card:blackjack) remaining-deck)
         ::
         ::  Update game state
         =/  updated-game=game-state:blackjack
           current-game(deck remaining-deck, player-hand player-hand, dealer-hand dealer-hand, game-in-progress %.y, dealer-turn %.n)
         ::
         =/  json=tape
-          (make-json-deal player-hand dealer-hand player-score dealer-visible session-id)
+          (make-json-deal:blackjack player-hand dealer-hand player-score dealer-visible session-id)
         ::
-        :_  this(games (~(put by games) session-id updated-game))
-        :~  %^  give-simple-payload:app:server
-              req
-              [200 ['Content-Type' 'application/json'] ~]
-            `(as-octs:mimes:html (crip json))
+        :_  state(games (~(put by games.state) session-id updated-game))
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'application/json']
+            ==
+            (to-octs:http (crip json))
         ==
         ::
           [%blackjack %api %hit ~]
         ::  Player hits (draw card)
-        =/  body=@t  q.body.request.req
+        :: =/  body=@t  q.body.request.req
         =/  session-id=@ud  0  ::  TODO: Parse from JSON
         ::
-        =/  existing=(unit game-state)  (~(get by games) session-id)
+        =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
         ?~  existing
-          :_  this
-          :~  (give-simple-payload:app:server req [404 ~] ~)
-          ==
-        =/  current-game=game-state  u.existing
+          [~[[%res ~ %404 ~ ~]] state]
+        =/  current-game=game-state:blackjack  u.existing
         ::
         ::  Draw card
-        =+  [new-card remaining-deck]=(draw-card:game deck.current-game)
-        =/  new-player-hand=hand  (snoc player-hand.current-game new-card)
-        =/  new-score=@ud  (hand-value:game new-player-hand)
-        =/  busted=?  (is-busted:game new-player-hand)
+        =+  [new-card remaining-deck]=(draw-card:blackjack deck.current-game)
+        =/  new-player-hand=hand:blackjack  (snoc (snag 0 player-hand.current-game) new-card)
+        =/  new-score=@ud  (hand-value:blackjack new-player-hand)
+        =/  busted=?  (is-busted:blackjack new-player-hand)
         ::
         ::  Update game
-        =/  updated-game=game-state
-          current-game(deck remaining-deck, player-hand new-player-hand)
+        =/  updated-game=game-state:blackjack
+          current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand))
         ::
         =/  json=tape
-          (make-json-hit new-card new-player-hand new-score busted)
+          (make-json-hit:blackjack new-card new-player-hand new-score busted)
         ::
-        :_  this(games (~(put by games) session-id updated-game))
-        :~  %^  give-simple-payload:app:server
-              req
-              [200 ['Content-Type' 'application/json'] ~]
-            `(as-octs:mimes:html (crip json))
+        :_  state(games (~(put by games.state) session-id updated-game))
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'application/json']
+            ==
+            (to-octs:http (crip json))
         ==
         ::
           [%blackjack %api %stand ~]
         ::  Player stands, dealer plays
-        =/  body=@t  q.body.request.req
+        :: =/  body=@t  q.body.request.req
         =/  session-id=@ud  0  ::  TODO: Parse from JSON
         ::
-        =/  existing=(unit game-state)  (~(get by games) session-id)
+        =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
         ?~  existing
-          :_  this
-          :~  (give-simple-payload:app:server req [404 ~] ~)
-          ==
-        =/  current-game=game-state  u.existing
+          [~[[%res ~ %404 ~ ~]] state]
+        =/  current-game=game-state:blackjack  u.existing
         ::
         ::  Dealer plays
-        =/  final-dealer-hand=hand  dealer-hand.current-game
-        =/  remaining-deck=(list card)  deck.current-game
+        =/  final-dealer-hand=hand:blackjack  (snag 0 dealer-hand.current-game)
+        =/  remaining-deck=(list card:blackjack)  deck.current-game
         |-
-        ?:  (dealer-should-hit:game final-dealer-hand)
-          =+  [new-card new-deck]=(draw-card:game remaining-deck)
+        ?:  (dealer-should-hit:blackjack final-dealer-hand)
+          =+  [new-card new-deck]=(draw-card:blackjack remaining-deck)
           $(final-dealer-hand (snoc final-dealer-hand new-card), remaining-deck new-deck)
         ::
         ::  Resolve outcome
-        =+  [outcome multiplier]=(resolve-outcome:game player-hand.current-game final-dealer-hand)
+        =+  [outcome multiplier]=(resolve-outcome:blackjack (snag 0 player-hand.current-game) final-dealer-hand)
         =/  payout=@ud  (mul current-bet.current-game multiplier)
         =/  new-bank=@ud  (add bank.current-game payout)
-        =/  dealer-score=@ud  (hand-value:game final-dealer-hand)
+        =/  dealer-score=@ud  (hand-value:blackjack final-dealer-hand)
         ::
         ::  Update game
-        =/  updated-game=game-state
-          current-game(dealer-hand final-dealer-hand, deck remaining-deck, bank new-bank, game-in-progress %.n)
+        =/  updated-game=game-state:blackjack
+          current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), deck remaining-deck, bank new-bank, game-in-progress %.n)
         ::
         =/  json=tape
-          (make-json-stand final-dealer-hand dealer-score outcome payout new-bank)
+          (make-json-stand:blackjack final-dealer-hand dealer-score outcome payout new-bank)
         ::
-        :_  this(games (~(put by games) session-id updated-game))
-        :~  %^  give-simple-payload:app:server
-              req
-              [200 ['Content-Type' 'application/json'] ~]
-            `(as-octs:mimes:html (crip json))
+        :_  state(games (~(put by games.state) session-id updated-game))
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'application/json']
+            ==
+            (to-octs:http (crip json))
         ==
-      :: ?>  =('/reset' uri)
-      :: :_  state(value 0)
-      :: :_  ~
-      :: ^-  effect:http
-      :: :*  %res  id=id  %200
-      ::     ['content-type' 'text/html']~
-      ::     %-  to-octs:http
-      ::     %-  crip
-      ::     ^-  tape
-      ::     =/  index  (find "COUNT" page)
-      ::     ;:  weld
-      ::       (scag (need index) page)
-      ::       (scow %ud 0)
-      ::       (slag (add (need index) ^~((lent "COUNT"))) page)
-      :: ==  ==
       ==  :: end POST
     ==  :: end GET/POST
   --

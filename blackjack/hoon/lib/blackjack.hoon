@@ -222,19 +222,21 @@
   "}"
 ::
 ++  make-json-deal
-  |=  [player=hand dealer=hand score=@ud visible=card sid=@ud]
+  |=  [player=(list hand) dealer=(list hand) score=@ud visible=card sid=@ud]
   ^-  tape
-  %+  weld  "\{\"playerHand\":"
-  %+  weld  (hand-to-json player)
-  %+  weld  ",\"dealerHand\":"
-  %+  weld  (hand-to-json dealer)
-  %+  weld  ",\"playerScore\":"
-  %+  weld  (trip (scot %ud score))
-  %+  weld  ",\"dealerVisibleCard\":"
-  %+  weld  (card-to-json visible)
-  %+  weld  ",\"sessionId\":"
-  %+  weld  (trip (scot %ud sid))
+  ;:  weld
+    "\{\"playerHand\":"
+    (roll (turn player hand-to-json) |=([a=tape b=tape] (weld b a)))
+    ",\"dealerHand\":"
+    (roll (turn dealer hand-to-json) |=([a=tape b=tape] (weld b a)))
+    ",\"playerScore\":"
+    (trip (scot %ud score))
+    ",\"dealerVisibleCard\":"  :: TODO for each hand
+    (card-to-json visible)
+    ",\"sessionId\":"
+    (trip (scot %ud sid))
   "}"
+  ==
 ::
 ++  make-json-hit
   |=  [new-card=card hand=hand score=@ud busted=?]
