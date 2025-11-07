@@ -216,9 +216,9 @@
   |=  [sid=@ud bank=@ud]
   ^-  tape
   %+  weld  "\{\"sessionId\":"
-  %+  weld  (trip (scot %ud sid))
+  %+  weld  (a-co:co sid)
   %+  weld  ",\"bank\":"
-  %+  weld  (trip (scot %ud bank))
+  %+  weld  (a-co:co bank)
   "}"
 ::
 ++  make-json-deal
@@ -230,11 +230,11 @@
     ",\"dealerHand\":"
     (roll (turn dealer hand-to-json) |=([a=tape b=tape] (weld b a)))
     ",\"playerScore\":"
-    (trip (scot %ud score))
+    (a-co:co score)
     ",\"dealerVisibleCard\":"  :: TODO for each hand
     (card-to-json visible)
     ",\"sessionId\":"
-    (trip (scot %ud sid))
+    (a-co:co sid)
   "}"
   ==
 ::
@@ -246,7 +246,7 @@
   %+  weld  ",\"hand\":"
   %+  weld  (hand-to-json hand)
   %+  weld  ",\"score\":"
-  %+  weld  (trip (scot %ud score))
+  %+  weld  (a-co:co score)
   %+  weld  ",\"busted\":"
   %+  weld  ?:(busted "true" "false")
   "}"
@@ -257,12 +257,12 @@
   %+  weld  "\{\"dealerHand\":"
   %+  weld  (hand-to-json dealer)
   %+  weld  ",\"dealerScore\":"
-  %+  weld  (trip (scot %ud score))
+  %+  weld  (a-co:co score)
   %+  weld  ",\"outcome\":\""
-  %+  weld  (trip (scot %tas outcome))
+  %+  weld  (a-co:co outcome)
   %+  weld  "\",\"payout\":"
-  %+  weld  (trip (scot %ud payout))
+  %+  weld  (a-co:co payout)
   %+  weld  ",\"bank\":"
-  %+  weld  (trip (scot %ud bank))
+  %+  weld  (a-co:co bank)
   "}"
 --
