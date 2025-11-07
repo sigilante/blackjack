@@ -1,0 +1,12 @@
+[project]
+name = "blackjack"
+project_name = "blackjack"
+version = "0.1.0"
+description = "A simple blackjack game"
+author_name = "Sigilante"
+author_email = "neal@zorp.io"
+github_username = "sigilante"
+license = "MIT"
+keywords = ["nockapp", "nockchain", "hoon"]
+nockapp_commit_hash = "336f744b6b83448ec2b86473a3dec29b15858999"
+template = "http-server"

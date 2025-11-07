@@ -1,0 +1,420 @@
+/* Windows 3.1 Color Scheme */
+:root {
+    --win31-gray: #c0c0c0;
+    --win31-dark-gray: #808080;
+    --win31-light-gray: #dfdfdf;
+    --win31-white: #ffffff;
+    --win31-black: #000000;
+    --win31-blue: #000080;
+    --win31-green: #008000;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    font-size: 11px;
+    background-color: #008080;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* Window Container */
+.window {
+    background-color: var(--win31-gray);
+    border: 2px solid;
+    border-color: var(--win31-white) var(--win31-black) var(--win31-black) var(--win31-white);
+    box-shadow: 1px 1px 0 var(--win31-dark-gray);
+    width: 800px;
+    min-height: 600px;
+}
+
+/* Menu Bar */
+.menu-bar {
+    background-color: var(--win31-gray);
+    border-bottom: 2px solid;
+    border-color: var(--win31-dark-gray) var(--win31-white) var(--win31-white) var(--win31-dark-gray);
+    display: flex;
+    padding: 2px 4px;
+}
+
+.menu-item {
+    padding: 4px 12px;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background-color: var(--win31-blue);
+    color: var(--win31-white);
+}
+
+/* Toolbar */
+.toolbar {
+    background-color: var(--win31-gray);
+    border-bottom: 2px solid;
+    border-color: var(--win31-white) var(--win31-black) var(--win31-black) var(--win31-white);
+    padding: 4px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.toolbar-btn {
+    background-color: var(--win31-gray);
+    border: 2px solid;
+    border-color: var(--win31-white) var(--win31-black) var(--win31-black) var(--win31-white);
+    padding: 4px 12px;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.toolbar-btn:active:not(:disabled) {
+    border-color: var(--win31-black) var(--win31-white) var(--win31-white) var(--win31-black);
+}
+
+.toolbar-btn:disabled {
+    color: var(--win31-dark-gray);
+    cursor: default;
+}
+
+.separator {
+    width: 2px;
+    height: 20px;
+    background: linear-gradient(to right, var(--win31-dark-gray), var(--win31-white));
+}
+
+/* Game Info */
+.game-info {
+    background-color: var(--win31-gray);
+    padding: 8px;
+    display: flex;
+    justify-content: space-around;
+    border-bottom: 2px solid var(--win31-dark-gray);
+}
+
+.info-section {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.info-label {
+    font-weight: bold;
+}
+
+.info-value {
+    background-color: var(--win31-white);
+    border: 1px solid;
+    border-color: var(--win31-dark-gray) var(--win31-white) var(--win31-white) var(--win31-dark-gray);
+    padding: 2px 8px;
+    min-width: 80px;
+    text-align: right;
+}
+
+/* Game Area */
+.game-area {
+    background-color: var(--win31-green);
+    padding: 20px;
+    min-height: 350px;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.hands-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.hand-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.hand-label {
+    color: var(--win31-white);
+    font-weight: bold;
+    font-size: 14px;
+    text-shadow: 1px 1px 0 var(--win31-black);
+}
+
+.hand {
+    display: flex;
+    gap: 10px;
+    min-height: 100px;
+    flex-wrap: wrap;
+}
+
+.card {
+    width: 71px;
+    height: 96px;
+    background-image: url('/blackjack/img/sprites.png');
+    background-repeat: no-repeat;
+    border: none;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    filter: drop-shadow(0 0 0 transparent);
+}
+
+/* Card back - using fifth card back */
+.card.back {
+    background-position: -284px -384px; /* Fifth card back position */
+}
+
+/* Card positions in spritesheet (71x96 each) */
+/* Assuming layout: Hearts row 0, Diamonds row 1, Clubs row 2, Spades row 3, Back at row 4 */
+/* Each suit: A, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K (13 cards) */
+
+.card.hearts-A { background-position: 0 0; }
+.card.hearts-2 { background-position: -71px 0; }
+.card.hearts-3 { background-position: -142px 0; }
+.card.hearts-4 { background-position: -213px 0; }
+.card.hearts-5 { background-position: -284px 0; }
+.card.hearts-6 { background-position: -355px 0; }
+.card.hearts-7 { background-position: -426px 0; }
+.card.hearts-8 { background-position: -497px 0; }
+.card.hearts-9 { background-position: -568px 0; }
+.card.hearts-10 { background-position: -639px 0; }
+.card.hearts-J { background-position: -710px 0; }
+.card.hearts-Q { background-position: -781px 0; }
+.card.hearts-K { background-position: -852px 0; }
+
+.card.diamonds-A { background-position: 0 -96px; }
+.card.diamonds-2 { background-position: -71px -96px; }
+.card.diamonds-3 { background-position: -142px -96px; }
+.card.diamonds-4 { background-position: -213px -96px; }
+.card.diamonds-5 { background-position: -284px -96px; }
+.card.diamonds-6 { background-position: -355px -96px; }
+.card.diamonds-7 { background-position: -426px -96px; }
+.card.diamonds-8 { background-position: -497px -96px; }
+.card.diamonds-9 { background-position: -568px -96px; }
+.card.diamonds-10 { background-position: -639px -96px; }
+.card.diamonds-J { background-position: -710px -96px; }
+.card.diamonds-Q { background-position: -781px -96px; }
+.card.diamonds-K { background-position: -852px -96px; }
+
+.card.clubs-A { background-position: 0 -192px; }
+.card.clubs-2 { background-position: -71px -192px; }
+.card.clubs-3 { background-position: -142px -192px; }
+.card.clubs-4 { background-position: -213px -192px; }
+.card.clubs-5 { background-position: -284px -192px; }
+.card.clubs-6 { background-position: -355px -192px; }
+.card.clubs-7 { background-position: -426px -192px; }
+.card.clubs-8 { background-position: -497px -192px; }
+.card.clubs-9 { background-position: -568px -192px; }
+.card.clubs-10 { background-position: -639px -192px; }
+.card.clubs-J { background-position: -710px -192px; }
+.card.clubs-Q { background-position: -781px -192px; }
+.card.clubs-K { background-position: -852px -192px; }
+
+.card.spades-A { background-position: 0 -288px; }
+.card.spades-2 { background-position: -71px -288px; }
+.card.spades-3 { background-position: -142px -288px; }
+.card.spades-4 { background-position: -213px -288px; }
+.card.spades-5 { background-position: -284px -288px; }
+.card.spades-6 { background-position: -355px -288px; }
+.card.spades-7 { background-position: -426px -288px; }
+.card.spades-8 { background-position: -497px -288px; }
+.card.spades-9 { background-position: -568px -288px; }
+.card.spades-10 { background-position: -639px -288px; }
+.card.spades-J { background-position: -710px -288px; }
+.card.spades-Q { background-position: -781px -288px; }
+.card.spades-K { background-position: -852px -288px; }
+
+.score {
+    color: var(--win31-white);
+    font-size: 16px;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 var(--win31-black);
+}
+
+/* Betting Area */
+.betting-area {
+    background-color: var(--win31-gray);
+    padding: 12px;
+    border: 2px solid;
+    border-color: var(--win31-white) var(--win31-black) var(--win31-black) var(--win31-white);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 200px;
+    align-items: center;
+}
+
+.betting-label {
+    font-weight: bold;
+    text-align: center;
+}
+
+.bet-amount-display {
+    background-color: var(--win31-white);
+    border: 2px solid;
+    border-color: var(--win31-dark-gray) var(--win31-white) var(--win31-white) var(--win31-dark-gray);
+    padding: 4px 12px;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    min-width: 100px;
+}
+
+.chips-container {
+    display: grid;
+    grid-template-columns: repeat(3, 45px);
+    gap: 8px;
+    justify-content: center;
+}
+
+.bet-display-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.bet-display {
+    width: 71px;
+    height: 96px;
+    background-image: url('/blackjack/img/sprites.png');
+    background-position: -640px -481px;
+    background-repeat: no-repeat;
+    position: relative;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.3));
+}
+
+.bet-display-chip {
+    width: 45px;
+    height: 45px;
+    background-image: url('/blackjack/img/sprites.png');
+    background-repeat: no-repeat;
+    position: absolute;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+.chip {
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+    background-image: url('/blackjack/img/sprites.png');
+    background-repeat: no-repeat;
+    border: none;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.chip .chip-value {
+    display: none;
+}
+
+.chip:hover {
+    transform: scale(1.05);
+}
+
+.chip:active {
+    transform: scale(0.95);
+}
+
+/* Chip sprite positions - 45x45 chips starting at (711, 480) in 2 rows x 3 columns */
+/* Row 1: 1, 5, 10 | Row 2: 25, 50, 100 */
+.chip-1 {
+    background-position: -711px -480px;
+}
+
+.chip-5 {
+    background-position: -756px -480px;
+}
+
+.chip-10 {
+    background-position: -801px -480px;
+}
+
+.chip-25 {
+    background-position: -711px -525px;
+}
+
+.chip-50 {
+    background-position: -756px -525px;
+}
+
+.chip-100 {
+    background-position: -801px -525px;
+}
+
+.bet-btn {
+    background-color: var(--win31-gray);
+    border: 2px solid;
+    border-color: var(--win31-white) var(--win31-black) var(--win31-black) var(--win31-white);
+    padding: 6px 12px;
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    align-self: center;
+}
+
+.bet-btn:active {
+    border-color: var(--win31-black) var(--win31-white) var(--win31-white) var(--win31-black);
+}
+
+/* Action Buttons */
+.action-buttons {
+    background-color: var(--win31-gray);
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    border-bottom: 2px solid var(--win31-dark-gray);
+}
+
+.action-btn {
+    background-color: var(--win31-gray);
+    border: 2px solid;
+    border-color: var(--win31-white) var(--win31-black) var(--win31-black) var(--win31-white);
+    padding: 8px 24px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    min-width: 100px;
+}
+
+.action-btn:active:not(:disabled) {
+    border-color: var(--win31-black) var(--win31-white) var(--win31-white) var(--win31-black);
+}
+
+.action-btn:disabled {
+    color: var(--win31-dark-gray);
+    cursor: default;
+}
+
+/* Status Bar */
+.status-bar {
+    background-color: var(--win31-gray);
+    border-top: 2px solid;
+    border-color: var(--win31-dark-gray) var(--win31-white) var(--win31-white) var(--win31-dark-gray);
+    padding: 4px 8px;
+    font-size: 11px;
+}
