@@ -58,6 +58,7 @@
     ~&  "Received request: {<method>} {<uri>}"
     =/  uri=path  (pa:dejs:http [%s uri])
     ~&  "Parsed path: {<uri>}"
+    ~&  "Method: {<method>}"
     ::  Handle GET/POST requests
     ?+    method  [~[[%res ~ %400 ~ ~]] state]
       ::
@@ -131,10 +132,14 @@
       ==  :: end GET
       ::
         %'POST'
-      ?+    uri  [~[[%res ~ %500 ~ ~]] state]
+      ~&  "POST request detected!"
+      ?+    uri
+        ~&  "No POST route matched for: {<uri>}"
+        [~[[%res ~ %500 ~ ~]] state]
         ::
           :: Initialize new game session
           [%blackjack %api %new-game ~]
+        ~&  "Matched /blackjack/api/new-game route"
         =/  session-id=@ud  next-session-id.state
         =/  new-game=game-state:blackjack
           :*  deck=*(list card:blackjack)
