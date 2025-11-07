@@ -55,15 +55,12 @@
   =/  n  (lent deck)
   =/  remaining=(list card)  deck
   =/  shuffled=(list card)  ~
-  ~&  remaining+remaining
-  ~&  >  shuffled+shuffled
   =/  rng  ~(. tog:tip5:ztd (reap 16 eny))
   |-  ^-  (list card)
   ?:  =(~ remaining)  shuffled
   =/  len=@ud  (lent remaining)
   ?:  =(len 1)  (weld shuffled remaining)
   =^  index=@  rng  (index:rng (lent remaining))
-  ~&  >  index+index
   =/  chosen=card  (snag index remaining)
   =/  new-remaining=(list card)
     (weld (scag index remaining) (slag +(index) remaining))
