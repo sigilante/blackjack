@@ -433,12 +433,22 @@ async function stand() {
 
         // Display outcome
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
-        setStatus(`${outcomeMessage}! Payout: $${data.payout}`);
+        setStatus(`${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
 
         // Reset for next round
         gameState.gameInProgress = false;
         gameState.currentBet = 0;
+        gameState.playerHand = [];
+        gameState.dealerHand = [];
+
+        // Disable action buttons
         document.getElementById('deal-btn').disabled = true;
+        document.getElementById('hit-btn').disabled = true;
+        document.getElementById('stand-btn').disabled = true;
+        disableSpecialActions();
+
+        // Update display to clear cards
+        updateDisplay();
 
     } catch (error) {
         console.error('Error standing:', error);

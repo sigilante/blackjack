@@ -246,12 +246,14 @@
         =/  new-score=@ud  (hand-value:blackjack new-player-hand)
         =/  busted=?  (is-busted:blackjack new-player-hand)
         ::
-        ::  Update game
+        ::  Update game (end game if busted)
         =/  updated-game=game-state:blackjack
+          ?:  busted
+            current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), game-in-progress %.n)
           current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand))
         ::
         =/  json=tape
-          (make-json-hit:blackjack new-card new-player-hand new-score busted)
+          (make-json-hit:blackjack new-card new-player-hand new-score busted bank.updated-game)
         ::
         :_  state(games (~(put by games.state) session-id updated-game))
         :_  ~

@@ -249,7 +249,7 @@
   ==
 ::
 ++  make-json-hit
-  |=  [new-card=card hand=hand score=@ud busted=?]
+  |=  [new-card=card hand=hand score=@ud busted=? bank=@ud]
   ^-  tape
   %+  weld  "\{\"newCard\":"
   %+  weld  (card-to-json new-card)
@@ -259,6 +259,8 @@
   %+  weld  (a-co:co score)
   %+  weld  ",\"busted\":"
   %+  weld  ?:(busted "true" "false")
+  %+  weld  ",\"bank\":"
+  %+  weld  (a-co:co bank)
   "}"
 ::
 ++  make-json-stand
