@@ -93,6 +93,95 @@ function renderCard(card, hidden = false) {
     return cardDiv;
 }
 
+// Drag state for card dragging effect
+const dragState = {
+    isDragging: false,
+    card: null,
+    startX: 0,
+    startY: 0,
+    offsetX: 0,
+    offsetY: 0,
+    originalParent: null,
+    originalPosition: null
+};
+
+// Initialize card dragging for player cards
+function makeCardDraggable(cardElement, isPlayerCard) {
+    if (!isPlayerCard) return; // Only player cards are draggable
+
+    cardElement.style.cursor = 'grab';
+
+    cardElement.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+
+        // Store original position and parent
+        const rect = cardElement.getBoundingClientRect();
+        dragState.originalPosition = {
+            left: rect.left,
+            top: rect.top,
+            parent: cardElement.parentElement
+        };
+
+        // Calculate offset from mouse to card top-left
+        dragState.offsetX = e.clientX - rect.left;
+        dragState.offsetY = e.clientY - rect.top;
+
+        // Move card to body with absolute positioning for dragging
+        dragState.isDragging = true;
+        dragState.card = cardElement;
+        cardElement.style.position = 'fixed';
+        cardElement.style.left = rect.left + 'px';
+        cardElement.style.top = rect.top + 'px';
+        cardElement.style.zIndex = '1000';
+        cardElement.style.cursor = 'grabbing';
+        cardElement.style.transition = 'none'; // Disable transitions during drag
+
+        document.body.appendChild(cardElement);
+    });
+}
+
+// Global mouse move handler
+document.addEventListener('mousemove', function(e) {
+    if (!dragState.isDragging || !dragState.card) return;
+
+    e.preventDefault();
+
+    // Update card position to follow mouse
+    dragState.card.style.left = (e.clientX - dragState.offsetX) + 'px';
+    dragState.card.style.top = (e.clientY - dragState.offsetY) + 'px';
+});
+
+// Global mouse up handler
+document.addEventListener('mouseup', function(e) {
+    if (!dragState.isDragging || !dragState.card) return;
+
+    e.preventDefault();
+
+    const card = dragState.card;
+    const origPos = dragState.originalPosition;
+
+    // Enable smooth transition for return animation
+    card.style.transition = 'all 0.3s ease-out';
+    card.style.left = origPos.left + 'px';
+    card.style.top = origPos.top + 'px';
+    card.style.cursor = 'grab';
+
+    // After animation completes, return card to original parent
+    setTimeout(() => {
+        card.style.position = '';
+        card.style.left = '';
+        card.style.top = '';
+        card.style.zIndex = '';
+        card.style.transition = '';
+        origPos.parent.appendChild(card);
+
+        // Reset drag state
+        dragState.isDragging = false;
+        dragState.card = null;
+        dragState.originalPosition = null;
+    }, 300); // Match transition duration
+});
+
 // Update the display
 function updateDisplay() {
     // Update bank and bet displays
@@ -159,7 +248,11 @@ function updateHand(player) {
     hand.forEach((card, index) => {
         // Hide dealer's first card until dealer's turn
         const hidden = player === 'dealer' && index === 0 && !gameState.dealerTurn;
-        handElement.appendChild(renderCard(card, hidden));
+        const cardElement = renderCard(card, hidden);
+        handElement.appendChild(cardElement);
+
+        // Make player cards draggable for visual effect
+        makeCardDraggable(cardElement, player === 'player');
     });
 
     // Calculate and display score
