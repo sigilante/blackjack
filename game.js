@@ -97,6 +97,7 @@ function renderCard(card, hidden = false) {
 const dragState = {
     isDragging: false,
     card: null,
+    placeholder: null,  // Placeholder to maintain spacing
     startX: 0,
     startY: 0,
     offsetX: 0,
@@ -116,12 +117,26 @@ function makeCardDraggable(cardElement, isPlayerCard) {
 
         // Store original position, parent, and sibling for exact reinsertion
         const rect = cardElement.getBoundingClientRect();
+        const parent = cardElement.parentElement;
+        const nextSibling = cardElement.nextSibling;
+
         dragState.originalPosition = {
             left: rect.left,
             top: rect.top,
-            parent: cardElement.parentElement,
-            nextSibling: cardElement.nextSibling  // Remember the next sibling for reinsertion
+            parent: parent,
+            nextSibling: nextSibling
         };
+
+        // Create invisible placeholder to maintain spacing
+        const placeholder = document.createElement('div');
+        placeholder.className = 'card card-placeholder';
+        placeholder.style.width = rect.width + 'px';
+        placeholder.style.height = rect.height + 'px';
+        placeholder.style.visibility = 'hidden';  // Invisible but takes up space
+        dragState.placeholder = placeholder;
+
+        // Insert placeholder at card's position before removing card
+        parent.insertBefore(placeholder, cardElement);
 
         // Calculate offset from mouse to card top-left
         dragState.offsetX = e.clientX - rect.left;
@@ -175,13 +190,19 @@ document.addEventListener('mouseup', function(e) {
         card.style.zIndex = '';
         card.style.transition = '';
 
-        // Insert card back at exact same position using stored nextSibling
-        // insertBefore(card, null) appends to end if it was the last card
+        // Remove placeholder and insert card back at its position
+        if (dragState.placeholder && dragState.placeholder.parentElement) {
+            dragState.placeholder.parentElement.removeChild(dragState.placeholder);
+        }
+
+        // Insert card back at exact same position
+        // The placeholder was at the original position, so use the stored nextSibling
         origPos.parent.insertBefore(card, origPos.nextSibling);
 
         // Reset drag state
         dragState.isDragging = false;
         dragState.card = null;
+        dragState.placeholder = null;
         dragState.originalPosition = null;
     }, 300); // Match transition duration
 });
