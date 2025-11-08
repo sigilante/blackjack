@@ -182,10 +182,12 @@ function placeBet(amount) {
         return;
     }
 
-    // If this is the first bet after a hand ended, clear the previous bet display
-    // (The deal button being disabled indicates we're between hands)
-    if (document.getElementById('deal-btn').disabled && gameState.currentBet > 0) {
-        gameState.currentBet = 0;
+    // If this is the first bet after a hand ended, clear the hands
+    // (The deal button being disabled indicates we're between hands with hands visible)
+    if (document.getElementById('deal-btn').disabled && (gameState.playerHand.length > 0 || gameState.dealerHand.length > 0)) {
+        gameState.playerHand = [];
+        gameState.dealerHand = [];
+        updateDisplay();
     }
 
     if (gameState.currentBet + amount > gameState.bank) {
@@ -388,9 +390,10 @@ async function hit() {
         const playerValue = calculateHandValue(gameState.playerHand);
 
         if (data.busted) {
-            // Bust - bank already updated from server
+            // Bust - bank already updated from server, clear bet but keep hands visible
             gameState.dealerTurn = true;
             gameState.gameInProgress = false;
+            gameState.currentBet = 0;
             updateDisplay();
             setStatus('Player busts! Place your bet for the next hand.');
 
@@ -450,14 +453,14 @@ async function stand() {
 
         updateDisplay();
 
-        // Display outcome (keep bet visible so user can see what they wagered)
+        // Display outcome
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
         setStatus(`${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
 
-        // Reset for next round (but keep currentBet visible until next hand)
+        // Reset for next round - clear bet but keep hands visible
         gameState.gameInProgress = false;
-        gameState.playerHand = [];
-        gameState.dealerHand = [];
+        gameState.currentBet = 0;
+        // DON'T clear hands - they stay visible until next bet is placed
 
         // Disable action buttons
         document.getElementById('deal-btn').disabled = true;
@@ -465,7 +468,7 @@ async function stand() {
         document.getElementById('stand-btn').disabled = true;
         disableSpecialActions();
 
-        // Update display to clear cards (bet chips remain visible)
+        // Update display to clear bet chips (cards remain visible)
         updateDisplay();
 
     } catch (error) {
@@ -519,18 +522,17 @@ async function doubleDown() {
         gameState.playerHand = data.playerHand || gameState.playerHand;
         gameState.dealerHand = data.dealerHand;
         gameState.bank = data.bank;
-        gameState.currentBet *= 2;  // Track that bet was doubled
 
         updateDisplay();
 
-        // Display outcome (keep doubled bet visible)
+        // Display outcome
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
         setStatus(`Doubled down! ${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
 
-        // Reset for next round (but keep currentBet visible)
+        // Reset for next round - clear bet but keep hands visible
         gameState.gameInProgress = false;
-        gameState.playerHand = [];
-        gameState.dealerHand = [];
+        gameState.currentBet = 0;
+        // DON'T clear hands - they stay visible until next bet is placed
 
         // Disable action buttons
         document.getElementById('deal-btn').disabled = true;
@@ -538,7 +540,7 @@ async function doubleDown() {
         document.getElementById('stand-btn').disabled = true;
         disableSpecialActions();
 
-        // Update display to clear cards (bet chips remain visible)
+        // Update display to clear bet chips (cards remain visible)
         updateDisplay();
 
     } catch (error) {
@@ -651,7 +653,8 @@ function resolveLoss(message) {
 // End the current round
 function endRound(message) {
     gameState.gameInProgress = false;
-    // Don't clear currentBet - keep it visible so player can see what they wagered
+    gameState.currentBet = 0;  // Clear bet visually
+    // DON'T clear hands - they stay visible until next bet is placed
 
     document.getElementById('hit-btn').disabled = true;
     document.getElementById('stand-btn').disabled = true;
