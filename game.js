@@ -182,6 +182,12 @@ function placeBet(amount) {
         return;
     }
 
+    // If this is the first bet after a hand ended, clear the previous bet display
+    // (The deal button being disabled indicates we're between hands)
+    if (document.getElementById('deal-btn').disabled && gameState.currentBet > 0) {
+        gameState.currentBet = 0;
+    }
+
     if (gameState.currentBet + amount > gameState.bank) {
         setStatus('Insufficient funds!');
         return;
@@ -269,6 +275,11 @@ async function dealHand() {
         await startNewGame();
     }
 
+    // Optimistically update bank immediately for instant visual feedback
+    const betAmount = gameState.currentBet;
+    gameState.bank -= betAmount;
+    updateDisplay();
+
     try {
         // Call server API to deal
         const response = await fetch('/blackjack/api/deal', {
@@ -276,7 +287,7 @@ async function dealHand() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 sessionId: sessionId,
-                bet: gameState.currentBet
+                bet: betAmount
             })
         });
 
@@ -287,10 +298,10 @@ async function dealHand() {
         const data = await response.json();
         console.log('Deal response:', data);
 
-        // Update game state from server
+        // Update game state from server (sync to actual values)
         gameState.gameInProgress = true;
         gameState.dealerTurn = false;
-        gameState.bank = data.bank;  // Use bank from server (already has bet deducted)
+        gameState.bank = data.bank;  // Sync to server's bank (should match our optimistic update)
 
         // Parse hands from server response
         // Server returns hands as arrays of cards directly
@@ -369,17 +380,25 @@ async function hit() {
         const data = await response.json();
         console.log('Hit response:', data);
 
-        // Update player hand from server
+        // Update player hand and bank from server
         gameState.playerHand = data.hand;
+        gameState.bank = data.bank;
         updateDisplay();
 
         const playerValue = calculateHandValue(gameState.playerHand);
 
         if (data.busted) {
-            // Bust
+            // Bust - bank already updated from server
             gameState.dealerTurn = true;
+            gameState.gameInProgress = false;
             updateDisplay();
-            resolveLoss('Player busts!');
+            setStatus('Player busts! Place your bet for the next hand.');
+
+            // Disable action buttons
+            document.getElementById('hit-btn').disabled = true;
+            document.getElementById('stand-btn').disabled = true;
+            document.getElementById('deal-btn').disabled = true;
+            disableSpecialActions();
         } else if (playerValue === 21) {
             // Auto-stand on 21
             setTimeout(() => stand(), 500);
@@ -431,13 +450,12 @@ async function stand() {
 
         updateDisplay();
 
-        // Display outcome
+        // Display outcome (keep bet visible so user can see what they wagered)
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
         setStatus(`${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
 
-        // Reset for next round
+        // Reset for next round (but keep currentBet visible until next hand)
         gameState.gameInProgress = false;
-        gameState.currentBet = 0;
         gameState.playerHand = [];
         gameState.dealerHand = [];
 
@@ -447,7 +465,7 @@ async function stand() {
         document.getElementById('stand-btn').disabled = true;
         disableSpecialActions();
 
-        // Update display to clear cards
+        // Update display to clear cards (bet chips remain visible)
         updateDisplay();
 
     } catch (error) {
@@ -505,13 +523,12 @@ async function doubleDown() {
 
         updateDisplay();
 
-        // Display outcome
+        // Display outcome (keep doubled bet visible)
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
         setStatus(`Doubled down! ${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
 
-        // Reset for next round
+        // Reset for next round (but keep currentBet visible)
         gameState.gameInProgress = false;
-        gameState.currentBet = 0;
         gameState.playerHand = [];
         gameState.dealerHand = [];
 
@@ -521,7 +538,7 @@ async function doubleDown() {
         document.getElementById('stand-btn').disabled = true;
         disableSpecialActions();
 
-        // Update display to clear cards
+        // Update display to clear cards (bet chips remain visible)
         updateDisplay();
 
     } catch (error) {
@@ -634,13 +651,14 @@ function resolveLoss(message) {
 // End the current round
 function endRound(message) {
     gameState.gameInProgress = false;
-    gameState.currentBet = 0;
+    // Don't clear currentBet - keep it visible so player can see what they wagered
 
     document.getElementById('hit-btn').disabled = true;
     document.getElementById('stand-btn').disabled = true;
     document.getElementById('double-btn').disabled = true;
     document.getElementById('split-btn').disabled = true;
     document.getElementById('surrender-btn').disabled = true;
+    document.getElementById('deal-btn').disabled = true;
 
     updateDisplay();
     setStatus(message + ' Place your bet for the next hand.');
