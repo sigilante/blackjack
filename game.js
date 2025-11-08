@@ -1,3 +1,6 @@
+// Server session tracking
+let sessionId = null;
+
 // Game State
 const gameState = {
     deck: [],
@@ -90,6 +93,120 @@ function renderCard(card, hidden = false) {
     return cardDiv;
 }
 
+// Drag state for card dragging effect
+const dragState = {
+    isDragging: false,
+    card: null,
+    placeholder: null,  // Placeholder to maintain spacing
+    startX: 0,
+    startY: 0,
+    offsetX: 0,
+    offsetY: 0,
+    originalParent: null,
+    originalPosition: null
+};
+
+// Initialize card dragging for player cards
+function makeCardDraggable(cardElement, isPlayerCard) {
+    if (!isPlayerCard) return; // Only player cards are draggable
+
+    cardElement.style.cursor = 'grab';
+
+    cardElement.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+
+        // Store original position, parent, and sibling for exact reinsertion
+        const rect = cardElement.getBoundingClientRect();
+        const parent = cardElement.parentElement;
+        const nextSibling = cardElement.nextSibling;
+
+        dragState.originalPosition = {
+            left: rect.left,
+            top: rect.top,
+            parent: parent,
+            nextSibling: nextSibling
+        };
+
+        // Create invisible placeholder to maintain spacing
+        const placeholder = document.createElement('div');
+        placeholder.className = 'card card-placeholder';
+        placeholder.style.width = rect.width + 'px';
+        placeholder.style.height = rect.height + 'px';
+        placeholder.style.visibility = 'hidden';  // Invisible but takes up space
+        dragState.placeholder = placeholder;
+
+        // Insert placeholder at card's position before removing card
+        parent.insertBefore(placeholder, cardElement);
+
+        // Calculate offset from mouse to card top-left
+        dragState.offsetX = e.clientX - rect.left;
+        dragState.offsetY = e.clientY - rect.top;
+
+        // Move card to body with absolute positioning for dragging
+        dragState.isDragging = true;
+        dragState.card = cardElement;
+        cardElement.style.position = 'fixed';
+        cardElement.style.left = rect.left + 'px';
+        cardElement.style.top = rect.top + 'px';
+        cardElement.style.zIndex = '1000';
+        cardElement.style.cursor = 'grabbing';
+        cardElement.style.transition = 'none'; // Disable transitions during drag
+
+        document.body.appendChild(cardElement);
+    });
+}
+
+// Global mouse move handler
+document.addEventListener('mousemove', function(e) {
+    if (!dragState.isDragging || !dragState.card) return;
+
+    e.preventDefault();
+
+    // Update card position to follow mouse
+    dragState.card.style.left = (e.clientX - dragState.offsetX) + 'px';
+    dragState.card.style.top = (e.clientY - dragState.offsetY) + 'px';
+});
+
+// Global mouse up handler
+document.addEventListener('mouseup', function(e) {
+    if (!dragState.isDragging || !dragState.card) return;
+
+    e.preventDefault();
+
+    const card = dragState.card;
+    const origPos = dragState.originalPosition;
+
+    // Enable smooth transition for return animation
+    card.style.transition = 'all 0.3s ease-out';
+    card.style.left = origPos.left + 'px';
+    card.style.top = origPos.top + 'px';
+    card.style.cursor = 'grab';
+
+    // After animation completes, return card to original position in parent
+    setTimeout(() => {
+        card.style.position = '';
+        card.style.left = '';
+        card.style.top = '';
+        card.style.zIndex = '';
+        card.style.transition = '';
+
+        // Remove placeholder and insert card back at its position
+        if (dragState.placeholder && dragState.placeholder.parentElement) {
+            dragState.placeholder.parentElement.removeChild(dragState.placeholder);
+        }
+
+        // Insert card back at exact same position
+        // The placeholder was at the original position, so use the stored nextSibling
+        origPos.parent.insertBefore(card, origPos.nextSibling);
+
+        // Reset drag state
+        dragState.isDragging = false;
+        dragState.card = null;
+        dragState.placeholder = null;
+        dragState.originalPosition = null;
+    }, 300); // Match transition duration
+});
+
 // Update the display
 function updateDisplay() {
     // Update bank and bet displays
@@ -156,7 +273,11 @@ function updateHand(player) {
     hand.forEach((card, index) => {
         // Hide dealer's first card until dealer's turn
         const hidden = player === 'dealer' && index === 0 && !gameState.dealerTurn;
-        handElement.appendChild(renderCard(card, hidden));
+        const cardElement = renderCard(card, hidden);
+        handElement.appendChild(cardElement);
+
+        // Make player cards draggable for visual effect
+        makeCardDraggable(cardElement, player === 'player');
     });
 
     // Calculate and display score
@@ -177,6 +298,14 @@ function placeBet(amount) {
     if (gameState.gameInProgress) {
         setStatus('Cannot change bet during a game.');
         return;
+    }
+
+    // If this is the first bet after a hand ended, clear the hands
+    // (The deal button being disabled indicates we're between hands with hands visible)
+    if (document.getElementById('deal-btn').disabled && (gameState.playerHand.length > 0 || gameState.dealerHand.length > 0)) {
+        gameState.playerHand = [];
+        gameState.dealerHand = [];
+        updateDisplay();
     }
 
     if (gameState.currentBet + amount > gameState.bank) {
@@ -209,29 +338,48 @@ function clearBet() {
 }
 
 // Start a new game (reset state)
-function startNewGame() {
-    gameState.bank = 1000;
-    gameState.currentBet = 0;
-    gameState.winLoss = 0;
-    gameState.gameInProgress = false;
-    gameState.dealerTurn = false;
-    gameState.playerHand = [];
-    gameState.dealerHand = [];
-    gameState.deck = [];
+async function startNewGame() {
+    try {
+        // Call server API to create new session
+        const response = await fetch('/blackjack/api/new-game', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
 
-    document.getElementById('deal-btn').disabled = true;
-    document.getElementById('hit-btn').disabled = true;
-    document.getElementById('stand-btn').disabled = true;
-    document.getElementById('double-btn').disabled = true;
-    document.getElementById('split-btn').disabled = true;
-    document.getElementById('surrender-btn').disabled = true;
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
 
-    updateDisplay();
-    setStatus('New game started. Place your bet and click Deal.');
+        const data = await response.json();
+
+        // Update session and game state from server
+        sessionId = data.sessionId;
+        gameState.bank = data.bank;
+        gameState.currentBet = 0;
+        gameState.winLoss = 0;
+        gameState.gameInProgress = false;
+        gameState.dealerTurn = false;
+        gameState.playerHand = [];
+        gameState.dealerHand = [];
+        gameState.deck = [];
+
+        document.getElementById('deal-btn').disabled = true;
+        document.getElementById('hit-btn').disabled = true;
+        document.getElementById('stand-btn').disabled = true;
+        document.getElementById('double-btn').disabled = true;
+        document.getElementById('split-btn').disabled = true;
+        document.getElementById('surrender-btn').disabled = true;
+
+        updateDisplay();
+        setStatus(`New game started (Session: ${sessionId}). Place your bet and click Deal.`);
+    } catch (error) {
+        console.error('Error starting new game:', error);
+        setStatus('Error connecting to server: ' + error.message);
+    }
 }
 
 // Deal initial hands
-function dealHand() {
+async function dealHand() {
     if (gameState.currentBet === 0) {
         setStatus('Please place a bet first.');
         return;
@@ -242,69 +390,81 @@ function dealHand() {
         return;
     }
 
-    // Deduct bet from bank
-    gameState.bank -= gameState.currentBet;
+    // Create session if needed
+    if (!sessionId) {
+        await startNewGame();
+    }
 
-    // Initialize game
-    gameState.gameInProgress = true;
-    gameState.dealerTurn = false;
-    gameState.deck = createDeck();
-    gameState.playerHand = [];
-    gameState.dealerHand = [];
-
-    // Deal two cards to each
-    gameState.playerHand.push(gameState.deck.pop());
-    gameState.dealerHand.push(gameState.deck.pop());
-    gameState.playerHand.push(gameState.deck.pop());
-    gameState.dealerHand.push(gameState.deck.pop());
-
+    // Optimistically update bank immediately for instant visual feedback
+    const betAmount = gameState.currentBet;
+    gameState.bank -= betAmount;
     updateDisplay();
 
-    // Check for blackjack
-    const playerValue = calculateHandValue(gameState.playerHand);
-    const dealerValue = calculateHandValue(gameState.dealerHand);
+    try {
+        // Call server API to deal
+        const response = await fetch('/blackjack/api/deal', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                sessionId: sessionId,
+                bet: betAmount
+            })
+        });
 
-    if (playerValue === 21 && dealerValue === 21) {
-        // Push
-        gameState.dealerTurn = true;
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Deal response:', data);
+
+        // Update game state from server (sync to actual values)
+        gameState.gameInProgress = true;
+        gameState.dealerTurn = false;
+        gameState.bank = data.bank;  // Sync to server's bank (should match our optimistic update)
+
+        // Parse hands from server response
+        // Server returns hands as arrays of cards directly
+        gameState.playerHand = data.playerHand || [];
+        gameState.dealerHand = data.dealerHand || [];
+
         updateDisplay();
-        resolvePush();
-        return;
-    } else if (playerValue === 21) {
-        // Player blackjack
-        gameState.dealerTurn = true;
-        updateDisplay();
-        resolveBlackjack();
-        return;
-    } else if (dealerValue === 21) {
-        // Dealer blackjack
-        gameState.dealerTurn = true;
-        updateDisplay();
-        resolveLoss('Dealer has Blackjack!');
-        return;
+
+        // Check for blackjack (score 21)
+        const playerValue = calculateHandValue(gameState.playerHand);
+
+        if (playerValue === 21) {
+            // Auto-stand on blackjack
+            setTimeout(() => stand(), 1000);
+            return;
+        }
+
+        // Enable player actions
+        document.getElementById('hit-btn').disabled = false;
+        document.getElementById('stand-btn').disabled = false;
+        document.getElementById('deal-btn').disabled = true;
+
+        // Enable double down if player has enough money
+        if (gameState.bank >= gameState.currentBet) {
+            document.getElementById('double-btn').disabled = false;
+        }
+
+        // Enable surrender
+        document.getElementById('surrender-btn').disabled = false;
+
+        // Enable split if player has matching cards and enough money
+        if (gameState.playerHand.length === 2 &&
+            gameState.playerHand[0].rank === gameState.playerHand[1].rank &&
+            gameState.bank >= gameState.currentBet) {
+            document.getElementById('split-btn').disabled = false;
+        }
+
+        setStatus(`Your turn. Score: ${playerValue}. Hit or Stand?`);
+
+    } catch (error) {
+        console.error('Error dealing:', error);
+        setStatus('Error dealing cards: ' + error.message);
     }
-
-    // Enable player actions
-    document.getElementById('hit-btn').disabled = false;
-    document.getElementById('stand-btn').disabled = false;
-    document.getElementById('deal-btn').disabled = true;
-
-    // Enable double down if player has enough money
-    if (gameState.bank >= gameState.currentBet) {
-        document.getElementById('double-btn').disabled = false;
-    }
-
-    // Enable surrender
-    document.getElementById('surrender-btn').disabled = false;
-
-    // Enable split if player has matching cards and enough money
-    if (gameState.playerHand.length === 2 &&
-        gameState.playerHand[0].rank === gameState.playerHand[1].rank &&
-        gameState.bank >= gameState.currentBet) {
-        document.getElementById('split-btn').disabled = false;
-    }
-
-    setStatus('Your turn. Hit or Stand?');
 }
 
 // Disable special action buttons (double, split, surrender)
@@ -315,7 +475,7 @@ function disableSpecialActions() {
 }
 
 // Player hits
-function hit() {
+async function hit() {
     if (!gameState.gameInProgress || gameState.dealerTurn) {
         return;
     }
@@ -323,27 +483,61 @@ function hit() {
     // Disable special actions after first hit
     disableSpecialActions();
 
-    // Draw a card
-    gameState.playerHand.push(gameState.deck.pop());
-    updateDisplay();
+    try {
+        // Call server API to hit
+        const response = await fetch('/blackjack/api/hit', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                sessionId: sessionId
+            })
+        });
 
-    const playerValue = calculateHandValue(gameState.playerHand);
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
 
-    if (playerValue > 21) {
-        // Bust
-        gameState.dealerTurn = true;
+        const data = await response.json();
+        console.log('Hit response:', data);
+
+        // Update player hand and bank from server
+        gameState.playerHand = data.hand;
+        gameState.bank = data.bank;
         updateDisplay();
-        resolveLoss('Player busts!');
-    } else if (playerValue === 21) {
-        // Auto-stand on 21
-        stand();
-    } else {
-        setStatus(`Score: ${playerValue}. Hit or Stand?`);
+
+        const playerValue = calculateHandValue(gameState.playerHand);
+
+        if (data.busted) {
+            // Bust - bank already updated from server, clear bet but keep hands visible
+            // Update win/loss tracking - busting means losing the bet
+            gameState.winLoss -= gameState.currentBet;
+
+            gameState.dealerTurn = true;
+            gameState.gameInProgress = false;
+            gameState.currentBet = 0;
+            updateDisplay();
+            setStatus('Player busts! Place your bet for the next hand.');
+
+            // Disable action buttons
+            document.getElementById('hit-btn').disabled = true;
+            document.getElementById('stand-btn').disabled = true;
+            document.getElementById('deal-btn').disabled = true;
+            disableSpecialActions();
+        } else if (playerValue === 21) {
+            // Auto-stand on 21
+            setTimeout(() => stand(), 500);
+        } else {
+            setStatus(`Score: ${playerValue}. Hit or Stand?`);
+        }
+
+    } catch (error) {
+        console.error('Error hitting:', error);
+        setStatus('Error hitting: ' + error.message);
     }
 }
 
 // Player stands
-function stand() {
+async function stand() {
     if (!gameState.gameInProgress || gameState.dealerTurn) {
         return;
     }
@@ -353,13 +547,61 @@ function stand() {
     // Disable player actions
     document.getElementById('hit-btn').disabled = true;
     document.getElementById('stand-btn').disabled = true;
+    disableSpecialActions();
 
-    // Play dealer's hand
-    updateDisplay();
     setStatus('Dealer\'s turn...');
 
-    // Dealer plays with a delay for visual effect
-    setTimeout(playDealerHand, 1000);
+    try {
+        // Call server API to stand (dealer plays and resolves)
+        const response = await fetch('/blackjack/api/stand', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                sessionId: sessionId
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Stand response:', data);
+
+        // Update dealer hand and bank from server
+        gameState.dealerHand = data.dealerHand;
+        gameState.bank = data.bank;
+
+        // Update win/loss tracking based on outcome
+        // Payout includes original bet, so profit = payout - bet
+        const betAmount = gameState.currentBet;
+        const profit = data.payout - betAmount;
+        gameState.winLoss += profit;
+
+        updateDisplay();
+
+        // Display outcome
+        const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
+        setStatus(`${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
+
+        // Reset for next round - clear bet but keep hands visible
+        gameState.gameInProgress = false;
+        gameState.currentBet = 0;
+        // DON'T clear hands - they stay visible until next bet is placed
+
+        // Disable action buttons
+        document.getElementById('deal-btn').disabled = true;
+        document.getElementById('hit-btn').disabled = true;
+        document.getElementById('stand-btn').disabled = true;
+        disableSpecialActions();
+
+        // Update display to clear bet chips (cards remain visible)
+        updateDisplay();
+
+    } catch (error) {
+        console.error('Error standing:', error);
+        setStatus('Error standing: ' + error.message);
+    }
 }
 
 // Player cashes out (placeholder for future implementation)
@@ -368,7 +610,7 @@ function cashOut() {
 }
 
 // Player doubles down
-function doubleDown() {
+async function doubleDown() {
     if (!gameState.gameInProgress || gameState.dealerTurn) {
         return;
     }
@@ -379,30 +621,64 @@ function doubleDown() {
         return;
     }
 
-    // Disable all action buttons except stand
+    // Disable all action buttons
     disableSpecialActions();
     document.getElementById('hit-btn').disabled = true;
+    document.getElementById('stand-btn').disabled = true;
 
-    // Double the bet
-    gameState.bank -= gameState.currentBet;
-    gameState.currentBet *= 2;
-    updateDisplay();
+    setStatus('Doubling down...');
 
-    // Draw exactly one card
-    gameState.playerHand.push(gameState.deck.pop());
-    updateDisplay();
+    try {
+        // Call server API to double down
+        const response = await fetch('/blackjack/api/double', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                sessionId: sessionId
+            })
+        });
 
-    const playerValue = calculateHandValue(gameState.playerHand);
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
 
-    if (playerValue > 21) {
-        // Bust
-        gameState.dealerTurn = true;
+        const data = await response.json();
+        console.log('Double down response:', data);
+
+        // Update game state from server
+        gameState.playerHand = data.playerHand || gameState.playerHand;
+        gameState.dealerHand = data.dealerHand;
+        gameState.bank = data.bank;
+
+        // Update win/loss tracking for doubled bet
+        // When doubling down, the total bet is 2x the original
+        const totalBet = gameState.currentBet * 2;
+        const profit = data.payout - totalBet;
+        gameState.winLoss += profit;
+
         updateDisplay();
-        resolveLoss('Player busts!');
-    } else {
-        // Automatically stand after double down
-        setStatus(`Doubled down to $${gameState.currentBet}. Score: ${playerValue}. Standing...`);
-        setTimeout(() => stand(), 1000);
+
+        // Display outcome
+        const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
+        setStatus(`Doubled down! ${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
+
+        // Reset for next round - clear bet but keep hands visible
+        gameState.gameInProgress = false;
+        gameState.currentBet = 0;
+        // DON'T clear hands - they stay visible until next bet is placed
+
+        // Disable action buttons
+        document.getElementById('deal-btn').disabled = true;
+        document.getElementById('hit-btn').disabled = true;
+        document.getElementById('stand-btn').disabled = true;
+        disableSpecialActions();
+
+        // Update display to clear bet chips (cards remain visible)
+        updateDisplay();
+
+    } catch (error) {
+        console.error('Error doubling down:', error);
+        setStatus('Error doubling down: ' + error.message);
     }
 }
 
@@ -510,13 +786,15 @@ function resolveLoss(message) {
 // End the current round
 function endRound(message) {
     gameState.gameInProgress = false;
-    gameState.currentBet = 0;
+    gameState.currentBet = 0;  // Clear bet visually
+    // DON'T clear hands - they stay visible until next bet is placed
 
     document.getElementById('hit-btn').disabled = true;
     document.getElementById('stand-btn').disabled = true;
     document.getElementById('double-btn').disabled = true;
     document.getElementById('split-btn').disabled = true;
     document.getElementById('surrender-btn').disabled = true;
+    document.getElementById('deal-btn').disabled = true;
 
     updateDisplay();
     setStatus(message + ' Place your bet for the next hand.');

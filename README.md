@@ -1,6 +1,6 @@
-# Blackjack
+# **Blackjack**
 
-A browser-based blackjack game with Windows 3.1 aesthetic, built with HTMX.
+A NockApp blackjack game.
 
 ![](./img/header.png)
 
@@ -19,6 +19,7 @@ This project will be developed in four stages:
 - Windows 3.1 style interface with toolbar and menubar
 - Spritesheet-based playing cards (71x96 Windows 98 style)
 - Poker chip betting interface ($5, $25, $100, $500)
+    
 - Bet tracking and bankroll management
 - Win/loss tracking
 - Dealer AI (dealer hits until 17)
@@ -52,25 +53,23 @@ This project will be developed in four stages:
    - Dealer plays automatically after you stand
    - Click "New Game" to reset your bankroll
 
-## Game Rules
+## **Game Rules**
 
 - Player starts with $1000
+    
 - Dealer hits until reaching 17
+    
 - Blackjack (21 with first two cards) pays 3:2
-- Player busts if over 21
+    
+- Player busts over 21
+    
 - Push (tie) returns your bet
+    
 
-## Technical Details
-
-- Pure HTML/CSS/JavaScript for the game logic
-- HTMX loaded for future backend integration
-- Spritesheet-based card rendering
-- Windows 3.1 aesthetic with beveled borders and classic color scheme
-
-## Future Development
+## **Status**
 
 The next stage will involve:
-- Moving game logic to NockApp backend
-- Server-side deck shuffling
-- HTMX-based API calls for game actions
+
 - Nockchain wallet integration
+    
+- Multiple hand support

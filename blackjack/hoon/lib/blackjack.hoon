@@ -1,5 +1,7 @@
 ::  blackjack/lib/blackjack-static.hoon
 ::
+/=  ztd  /common/ztd/three
+::
 ::  blackjack/sur/blackjack.hoon
 ::  Data structures for blackjack game
 ::
@@ -50,33 +52,19 @@
 ++  shuffle-deck
   |=  [deck=(list card) eny=@uvJ]
   ^-  (list card)
-  :: |*  [a=(list) eny=@uvJ]
-  deck
-  :: =/  n  (lent deck)
-  :: =/  i  0
-  :: =/  rng  ~(. tog eny)
-  :: |-  ^-  (list _?>(?=(^ deck) i.deck))
-  :: ?:  =(n i)  deck
-  :: =^  r  rng  (rads:rng n)
-  :: =/  i1  (snag i deck)
-  :: =/  i2  (snag r deck)
-  :: =.  deck  (snap deck i i2)
-  :: =.  deck  (snap deck r i1)
-  :: $(i +(i))
-  :: =/  remaining=(list card)  deck
-  :: =/  shuffled=(list card)  ~
-  :: =/  rng  ~(. og eny)
-  :: ::
-  :: |-  ^-  (list card)
-  :: ?~  remaining  shuffled
-  :: =/  len=@ud  (lent remaining)
-  :: ?:  =(len 1)  (weld shuffled remaining)
-  :: =^  index  rng  (rads:rng len)
-  :: =/  chosen=card  (snag index remaining)
-  :: =/  new-remaining=(list card)
-  ::   (weld (scag index remaining) (slag +(index) remaining))
-  :: ::
-  :: $(remaining new-remaining, shuffled [chosen shuffled])
+  =/  n  (lent deck)
+  =/  remaining=(list card)  deck
+  =/  shuffled=(list card)  ~
+  =/  rng  ~(. tog:tip5:ztd (reap 16 eny))
+  |-  ^-  (list card)
+  ?:  =(~ remaining)  shuffled
+  =/  len=@ud  (lent remaining)
+  ?:  =(len 1)  (weld shuffled remaining)
+  =^  index=@  rng  (index:rng (lent remaining))
+  =/  chosen=card  (snag index remaining)
+  =/  new-remaining=(list card)
+    (weld (scag index remaining) (slag +(index) remaining))
+  $(remaining new-remaining, shuffled `(list card)`[chosen shuffled])
 ::
 ::  Calculate hand value (handle aces)
 ++  calculate-hand-value
@@ -199,11 +187,31 @@
   [%push 1]
 ::
 ::
+::  JSON parsing helpers
+++  parse-json-number
+  |=  [key=tape json-text=tape]
+  ^-  (unit @ud)
+  ::  Find the key in the JSON
+  =/  key-str=tape  (weld "\"" (weld key "\":"))
+  =/  idx=(unit @ud)  (find key-str json-text)
+  ?~  idx  ~
+  ::  Skip past the key and colon
+  =/  remaining=tape  (slag (add u.idx (lent key-str)) json-text)
+  ::  Extract digits
+  =/  digits=tape
+    |-  ^-  tape
+    ?~  remaining  ~
+    ?:  ?&  (gte i.remaining '0')  (lte i.remaining '9')  ==
+      [i.remaining $(remaining t.remaining)]
+    ~
+  ?~  digits  ~
+  `(rash (crip digits) dem)
+::
 ::  JSON encoding helpers
 ++  card-to-json
   |=  c=card
   ^-  tape
-  (weld "\{\"suit\":\"" (weld (trip (scot %tas suit.c)) (weld "\",\"rank\":\"" (weld (trip (scot %tas rank.c)) "\"}"))))
+  (weld "\{\"suit\":\"" (weld (scow %tas suit.c) (weld "\",\"rank\":\"" (weld (scow %tas rank.c) "\"}"))))
 ::
 ++  hand-to-json
   |=  h=hand
@@ -216,13 +224,13 @@
   |=  [sid=@ud bank=@ud]
   ^-  tape
   %+  weld  "\{\"sessionId\":"
-  %+  weld  (trip (scot %ud sid))
+  %+  weld  (a-co:co sid)
   %+  weld  ",\"bank\":"
-  %+  weld  (trip (scot %ud bank))
+  %+  weld  (a-co:co bank)
   "}"
 ::
 ++  make-json-deal
-  |=  [player=(list hand) dealer=(list hand) score=@ud visible=card sid=@ud]
+  |=  [player=(list hand) dealer=(list hand) score=@ud visible=card sid=@ud bank=@ud]
   ^-  tape
   ;:  weld
     "\{\"playerHand\":"
@@ -230,25 +238,29 @@
     ",\"dealerHand\":"
     (roll (turn dealer hand-to-json) |=([a=tape b=tape] (weld b a)))
     ",\"playerScore\":"
-    (trip (scot %ud score))
+    (a-co:co score)
     ",\"dealerVisibleCard\":"  :: TODO for each hand
     (card-to-json visible)
     ",\"sessionId\":"
-    (trip (scot %ud sid))
+    (a-co:co sid)
+    ",\"bank\":"
+    (a-co:co bank)
   "}"
   ==
 ::
 ++  make-json-hit
-  |=  [new-card=card hand=hand score=@ud busted=?]
+  |=  [new-card=card hand=hand score=@ud busted=? bank=@ud]
   ^-  tape
   %+  weld  "\{\"newCard\":"
   %+  weld  (card-to-json new-card)
   %+  weld  ",\"hand\":"
   %+  weld  (hand-to-json hand)
   %+  weld  ",\"score\":"
-  %+  weld  (trip (scot %ud score))
+  %+  weld  (a-co:co score)
   %+  weld  ",\"busted\":"
   %+  weld  ?:(busted "true" "false")
+  %+  weld  ",\"bank\":"
+  %+  weld  (a-co:co bank)
   "}"
 ::
 ++  make-json-stand
@@ -257,12 +269,29 @@
   %+  weld  "\{\"dealerHand\":"
   %+  weld  (hand-to-json dealer)
   %+  weld  ",\"dealerScore\":"
-  %+  weld  (trip (scot %ud score))
+  %+  weld  (a-co:co score)
   %+  weld  ",\"outcome\":\""
-  %+  weld  (trip (scot %tas outcome))
+  %+  weld  (scow %tas outcome)
   %+  weld  "\",\"payout\":"
-  %+  weld  (trip (scot %ud payout))
+  %+  weld  (a-co:co payout)
   %+  weld  ",\"bank\":"
-  %+  weld  (trip (scot %ud bank))
+  %+  weld  (a-co:co bank)
+  "}"
+::
+++  make-json-double
+  |=  [player=hand dealer=hand dealer-score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud]
+  ^-  tape
+  %+  weld  "\{\"playerHand\":"
+  %+  weld  (hand-to-json player)
+  %+  weld  ",\"dealerHand\":"
+  %+  weld  (hand-to-json dealer)
+  %+  weld  ",\"dealerScore\":"
+  %+  weld  (a-co:co dealer-score)
+  %+  weld  ",\"outcome\":\""
+  %+  weld  (scow %tas outcome)
+  %+  weld  "\",\"payout\":"
+  %+  weld  (a-co:co payout)
+  %+  weld  ",\"bank\":"
+  %+  weld  (a-co:co bank)
   "}"
 --
