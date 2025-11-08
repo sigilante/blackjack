@@ -391,6 +391,9 @@ async function hit() {
 
         if (data.busted) {
             // Bust - bank already updated from server, clear bet but keep hands visible
+            // Update win/loss tracking - busting means losing the bet
+            gameState.winLoss -= gameState.currentBet;
+
             gameState.dealerTurn = true;
             gameState.gameInProgress = false;
             gameState.currentBet = 0;
@@ -450,6 +453,12 @@ async function stand() {
         // Update dealer hand and bank from server
         gameState.dealerHand = data.dealerHand;
         gameState.bank = data.bank;
+
+        // Update win/loss tracking based on outcome
+        // Payout includes original bet, so profit = payout - bet
+        const betAmount = gameState.currentBet;
+        const profit = data.payout - betAmount;
+        gameState.winLoss += profit;
 
         updateDisplay();
 
@@ -522,6 +531,12 @@ async function doubleDown() {
         gameState.playerHand = data.playerHand || gameState.playerHand;
         gameState.dealerHand = data.dealerHand;
         gameState.bank = data.bank;
+
+        // Update win/loss tracking for doubled bet
+        // When doubling down, the total bet is 2x the original
+        const totalBet = gameState.currentBet * 2;
+        const profit = data.payout - totalBet;
+        gameState.winLoss += profit;
 
         updateDisplay();
 
