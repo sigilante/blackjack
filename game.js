@@ -462,7 +462,7 @@ function cashOut() {
 }
 
 // Player doubles down
-function doubleDown() {
+async function doubleDown() {
     if (!gameState.gameInProgress || gameState.dealerTurn) {
         return;
     }
@@ -473,30 +473,60 @@ function doubleDown() {
         return;
     }
 
-    // Disable all action buttons except stand
+    // Disable all action buttons
     disableSpecialActions();
     document.getElementById('hit-btn').disabled = true;
+    document.getElementById('stand-btn').disabled = true;
 
-    // Double the bet
-    gameState.bank -= gameState.currentBet;
-    gameState.currentBet *= 2;
-    updateDisplay();
+    setStatus('Doubling down...');
 
-    // Draw exactly one card
-    gameState.playerHand.push(gameState.deck.pop());
-    updateDisplay();
+    try {
+        // Call server API to double down
+        const response = await fetch('/blackjack/api/double', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                sessionId: sessionId
+            })
+        });
 
-    const playerValue = calculateHandValue(gameState.playerHand);
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
 
-    if (playerValue > 21) {
-        // Bust
-        gameState.dealerTurn = true;
+        const data = await response.json();
+        console.log('Double down response:', data);
+
+        // Update game state from server
+        gameState.playerHand = data.playerHand || gameState.playerHand;
+        gameState.dealerHand = data.dealerHand;
+        gameState.bank = data.bank;
+        gameState.currentBet *= 2;  // Track that bet was doubled
+
         updateDisplay();
-        resolveLoss('Player busts!');
-    } else {
-        // Automatically stand after double down
-        setStatus(`Doubled down to $${gameState.currentBet}. Score: ${playerValue}. Standing...`);
-        setTimeout(() => stand(), 1000);
+
+        // Display outcome
+        const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
+        setStatus(`Doubled down! ${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
+
+        // Reset for next round
+        gameState.gameInProgress = false;
+        gameState.currentBet = 0;
+        gameState.playerHand = [];
+        gameState.dealerHand = [];
+
+        // Disable action buttons
+        document.getElementById('deal-btn').disabled = true;
+        document.getElementById('hit-btn').disabled = true;
+        document.getElementById('stand-btn').disabled = true;
+        disableSpecialActions();
+
+        // Update display to clear cards
+        updateDisplay();
+
+    } catch (error) {
+        console.error('Error doubling down:', error);
+        setStatus('Error doubling down: ' + error.message);
     }
 }
 

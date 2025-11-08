@@ -277,4 +277,21 @@
   %+  weld  ",\"bank\":"
   %+  weld  (a-co:co bank)
   "}"
+::
+++  make-json-double
+  |=  [player=hand dealer=hand dealer-score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud]
+  ^-  tape
+  %+  weld  "\{\"playerHand\":"
+  %+  weld  (hand-to-json player)
+  %+  weld  ",\"dealerHand\":"
+  %+  weld  (hand-to-json dealer)
+  %+  weld  ",\"dealerScore\":"
+  %+  weld  (a-co:co dealer-score)
+  %+  weld  ",\"outcome\":\""
+  %+  weld  (scow %tas outcome)
+  %+  weld  "\",\"payout\":"
+  %+  weld  (a-co:co payout)
+  %+  weld  ",\"bank\":"
+  %+  weld  (a-co:co bank)
+  "}"
 --

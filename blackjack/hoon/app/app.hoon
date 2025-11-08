@@ -313,6 +313,79 @@
             ==
             (to-octs:http (crip json))
         ==
+        ::
+          [%blackjack %api %double ~]
+        ::  Player doubles down (double bet, hit once, auto-stand)
+        ?~  body
+          [~[[%res ~ %400 ~ ~]] state]
+        =/  body-text=tape  (trip q.u.body)
+        =/  session-id-parsed=(unit @ud)  (parse-json-number:blackjack "sessionId" body-text)
+        =/  session-id=@ud  ?~(session-id-parsed 0 u.session-id-parsed)
+        ::
+        =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
+        ?~  existing
+          [~[[%res ~ %404 ~ ~]] state]
+        =/  current-game=game-state:blackjack  u.existing
+        ::
+        ::  Check if player can afford to double
+        ?:  (gth current-bet.current-game bank.current-game)
+          [~[[%res ~ %400 ~ ~]] state]
+        ::
+        ::  Deduct additional bet from bank and double current-bet
+        =/  new-bank=@ud  (sub bank.current-game current-bet.current-game)
+        =/  doubled-bet=@ud  (mul current-bet.current-game 2)
+        ::
+        ::  Draw exactly one card
+        =+  [new-card remaining-deck]=(draw-card:blackjack deck.current-game)
+        =/  new-player-hand=hand:blackjack  (snoc (snag 0 player-hand.current-game) new-card)
+        =/  player-busted=?  (is-busted:blackjack new-player-hand)
+        ::
+        ::  If busted, game over (no need to play dealer hand)
+        ?:  player-busted
+          =/  dealer-hand-current=hand:blackjack  (snag 0 dealer-hand.current-game)
+          =/  dealer-score=@ud  (hand-value:blackjack dealer-hand-current)
+          =/  final-game=game-state:blackjack
+            current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet doubled-bet, bank new-bank, game-in-progress %.n)
+          =/  json=tape
+            (make-json-double:blackjack new-player-hand dealer-hand-current dealer-score %loss 0 new-bank)
+          :_  state(games (~(put by games.state) session-id final-game))
+          :_  ~
+          ^-  effect:http
+          :*  %res  id=id  %200
+              :~  ['Content-Type' 'application/json']
+              ==
+              (to-octs:http (crip json))
+          ==
+        ::
+        ::  Not busted, dealer plays
+        =/  final-dealer-hand=hand:blackjack  (snag 0 dealer-hand.current-game)
+        =/  deck-for-dealer=(list card:blackjack)  remaining-deck
+        |-
+        ?:  (dealer-should-hit:blackjack final-dealer-hand)
+          =+  [new-card new-deck]=(draw-card:blackjack deck-for-dealer)
+          $(final-dealer-hand (snoc final-dealer-hand new-card), deck-for-dealer new-deck)
+        ::
+        ::  Resolve outcome with doubled bet
+        =+  [outcome multiplier]=(resolve-outcome:blackjack new-player-hand final-dealer-hand)
+        =/  payout=@ud  (mul doubled-bet multiplier)
+        =/  final-bank=@ud  (add new-bank payout)
+        =/  dealer-score=@ud  (hand-value:blackjack final-dealer-hand)
+        ::
+        ::  Update game
+        =/  final-game=game-state:blackjack
+          current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), player-hand (snap player-hand.current-game 0 new-player-hand), deck deck-for-dealer, current-bet doubled-bet, bank final-bank, game-in-progress %.n)
+        ::
+        =/  json=tape
+          (make-json-double:blackjack new-player-hand final-dealer-hand dealer-score outcome payout final-bank)
+        ::
+        :_  state(games (~(put by games.state) session-id final-game))
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'application/json']
+            ==
+            (to-octs:http (crip json))
+        ==
       ==  :: end POST
     ==  :: end GET/POST
   --
