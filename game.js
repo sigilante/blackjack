@@ -114,12 +114,13 @@ function makeCardDraggable(cardElement, isPlayerCard) {
     cardElement.addEventListener('mousedown', function(e) {
         e.preventDefault();
 
-        // Store original position and parent
+        // Store original position, parent, and sibling for exact reinsertion
         const rect = cardElement.getBoundingClientRect();
         dragState.originalPosition = {
             left: rect.left,
             top: rect.top,
-            parent: cardElement.parentElement
+            parent: cardElement.parentElement,
+            nextSibling: cardElement.nextSibling  // Remember the next sibling for reinsertion
         };
 
         // Calculate offset from mouse to card top-left
@@ -166,14 +167,17 @@ document.addEventListener('mouseup', function(e) {
     card.style.top = origPos.top + 'px';
     card.style.cursor = 'grab';
 
-    // After animation completes, return card to original parent
+    // After animation completes, return card to original position in parent
     setTimeout(() => {
         card.style.position = '';
         card.style.left = '';
         card.style.top = '';
         card.style.zIndex = '';
         card.style.transition = '';
-        origPos.parent.appendChild(card);
+
+        // Insert card back at exact same position using stored nextSibling
+        // insertBefore(card, null) appends to end if it was the last card
+        origPos.parent.insertBefore(card, origPos.nextSibling);
 
         // Reset drag state
         dragState.isDragging = false;
