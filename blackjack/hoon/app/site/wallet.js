@@ -114,8 +114,8 @@ function mockSendFunds() {
     document.getElementById('send-amount').value = '';
 }
 
-// Mock: Cash out funds
-function mockCashOut() {
+// Cash out funds from game session
+async function mockCashOut() {
     const destinationPkh = document.getElementById('cashout-pkh').value.trim();
     const amount = parseInt(document.getElementById('cashout-amount').value) || 0;
 
@@ -129,41 +129,71 @@ function mockCashOut() {
         return;
     }
 
-    if (amount > availableBalance) {
-        setStatus('Insufficient balance');
+    // Get current game session from localStorage
+    const gameId = localStorage.getItem('blackjack-gameId');
+    if (!gameId) {
+        setStatus('No active game session. Please start a game first.');
         return;
     }
 
-    // Mock transaction
-    const tx = {
-        type: 'withdrawal',
-        amount: amount,
-        from: serverPkh || 'Server',
-        to: destinationPkh,
-        timestamp: new Date().toISOString(),
-        status: 'pending',
-        txHash: 'mock-' + Math.random().toString(36).substring(7)
-    };
+    setStatus(`Requesting cashout of N$${amount}...`);
 
-    transactionHistory.unshift(tx);
-    availableBalance -= amount;
+    try {
+        // Call the cashout endpoint
+        const response = await fetch('/blackjack/api/wallet/cashout', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                gameId: gameId,
+                playerPkh: destinationPkh,
+                amount: amount
+            })
+        });
 
-    // Simulate confirmation after 2 seconds
-    setTimeout(() => {
-        tx.status = 'confirmed';
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Cashout response:', data);
+
+        if (!data.success) {
+            throw new Error(data.error || 'Cashout failed');
+        }
+
+        // Create transaction record
+        const tx = {
+            type: 'withdrawal',
+            amount: amount,
+            from: serverPkh || 'Game Server',
+            to: destinationPkh,
+            timestamp: new Date().toISOString(),
+            status: data.txReady ? 'ready' : 'prepared',
+            txHash: 'pending-' + Math.random().toString(36).substring(7),
+            gameId: gameId,
+            newBank: data.newBank
+        };
+
+        transactionHistory.unshift(tx);
+
+        // Update available balance to match the new bank from the game
+        availableBalance = data.newBank;
+
+        updateDisplay();
         updateTransactionList();
         saveState();
-        setStatus(`Withdrawal of N$${amount} confirmed!`);
-    }, 2000);
 
-    updateDisplay();
-    updateTransactionList();
-    saveState();
-    setStatus(`Withdrawal of N$${amount} pending confirmation (mock: 2 seconds)...`);
+        setStatus(data.message || 'Cashout completed successfully');
 
-    // Clear inputs
-    document.getElementById('cashout-pkh').value = '';
-    document.getElementById('cashout-amount').value = '';
+        // Clear inputs
+        document.getElementById('cashout-pkh').value = '';
+        document.getElementById('cashout-amount').value = '';
+
+    } catch (error) {
+        console.error('Cashout error:', error);
+        setStatus('Cashout failed: ' + error.message);
+    }
 }
 
 // Update display

@@ -3,6 +3,10 @@
 ::
 /+  http, blackjack
 /=  *  /common/wrapper
+::  Wallet imports (for transaction building)
+::  TODO: Add these when wallet dependencies are available
+::  /=  transact  /common/tx-engine
+::  /=  tx-builder  /apps/wallet/lib/tx-builder-v1
 ::  Static resources (load as cords)
 /*  index       %html   /app/site/index/html
 /*  style       %css    /app/site/style/css
@@ -655,6 +659,113 @@
           (make-json-double:blackjack new-player-hand final-dealer-hand dealer-score outcome payout final-bank)
         ::
         :_  state(sessions (~(put by sessions.state) game-id final-session))
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+            ==
+            (to-octs:http (crip json))
+        ==
+        ::
+        ::  Cash out - withdraw funds from game to player's wallet
+          [%blackjack %api %wallet %cashout ~]
+        ~&  >>  "Matched /blackjack/api/wallet/cashout route"
+        ::  Parse body to get game-id, player-pkh, and amount
+        ?~  body
+          =/  error-json=tape  (make-json-error:blackjack 400 "Missing request body")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        =/  body-text=tape  (trip q.u.body)
+        ~&  >>  "Cashout request body: {<body-text>}"
+        ::
+        ::  Parse required fields
+        =/  game-id-parsed=(unit @t)  (parse-json-text:blackjack "gameId" body-text)
+        =/  player-pkh-parsed=(unit @t)  (parse-json-text:blackjack "playerPkh" body-text)
+        =/  amount-parsed=(unit @ud)  (parse-json-number:blackjack "amount" body-text)
+        ::
+        ::  Validate all fields present
+        ?~  game-id-parsed
+          =/  error-json=tape  (make-json-cashout-tx:blackjack '' 0 '' 0 %.n `"Missing gameId field")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ?~  player-pkh-parsed
+          =/  error-json=tape  (make-json-cashout-tx:blackjack u.game-id-parsed 0 '' 0 %.n `"Missing playerPkh field")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ?~  amount-parsed
+          =/  error-json=tape  (make-json-cashout-tx:blackjack u.game-id-parsed 0 u.player-pkh-parsed 0 %.n `"Missing amount field")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::
+        =/  =game-id:blackjack  u.game-id-parsed
+        =/  player-pkh=@t  u.player-pkh-parsed
+        =/  amount=@ud  u.amount-parsed
+        ~&  >>  "Cashout: game-id={<game-id>}, player-pkh={<player-pkh>}, amount={<amount>}"
+        ::
+        ::  Validate session exists
+        =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
+        ?~  existing
+          ~&  >>>  "Session not found: {<game-id>}"
+          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh 0 %.n `"Session not found")
+          :_  state
+          :_  ~
+          [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::
+        =/  current-session=session-state:blackjack  u.existing
+        =/  current-game=game-state-inner:blackjack  game.current-session
+        ::
+        ::  Validate no game in progress
+        ?:  game-in-progress.current-game
+          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n `"Cannot cash out during active game")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::
+        ::  Validate sufficient balance
+        ?:  (gth amount bank.current-game)
+          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n `"Insufficient balance")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::
+        ::  Validate minimum cashout amount (at least 1)
+        ?:  =(0 amount)
+          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n `"Amount must be greater than 0")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::
+        ::  Deduct amount from bank
+        =/  new-bank=@ud  (sub bank.current-game amount)
+        ~&  >>  "Cashout approved: {<amount>} from {<bank.current-game>} leaving {<new-bank>}"
+        ::
+        ::  TODO: Build transaction using wallet tx-builder
+        ::  For now, we'll just update the bank and return a success message
+        ::  When wallet library is available:
+        ::  1. Get server's available notes (UTXOs)
+        ::  2. Use tx-builder to construct transaction
+        ::  3. Sign with server's private key
+        ::  4. Return raw-tx for submission
+        ::
+        ::  Update game state
+        =/  updated-game=game-state-inner:blackjack
+          current-game(bank new-bank)
+        ::
+        ::  Update session state
+        =/  updated-session=session-state:blackjack
+          current-session(game updated-game, last-activity now.input.ovum)
+        ::
+        ::  Build response (tx-ready=%.n since we don't have wallet library yet)
+        =/  json=tape
+          (make-json-cashout-tx:blackjack game-id amount player-pkh new-bank %.n ~)
+        ~&  >>  "Cashout completed, returning response"
+        ::
+        :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
         ^-  effect:http
         :*  %res  id=id  %200

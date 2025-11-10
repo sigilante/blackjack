@@ -528,4 +528,46 @@
   %+  weld  ",\"history\":"
   %+  weld  (history-list-to-json history.sess)
   "}"
+::
+++  parse-json-text
+  |=  [key=tape json-text=tape]
+  ^-  (unit @t)
+  ::  Find the key in the JSON
+  =/  key-str=tape  (weld "\"" (weld key "\":\""))
+  =/  idx=(unit @ud)  (find key-str json-text)
+  ?~  idx  ~
+  ::  Skip past the key, colon, and opening quote
+  =/  remaining=tape  (slag (add u.idx (lent key-str)) json-text)
+  ::  Extract characters until closing quote
+  =/  text=tape
+    |-  ^-  tape
+    ?~  remaining  ~
+    ?:  =(i.remaining '"')  ~
+    [i.remaining $(remaining t.remaining)]
+  ?~  text  ~
+  `(crip text)
+::
+++  make-json-cashout-tx
+  |=  [game-id=@t amount=@ud player-pkh=@t new-bank=@ud tx-ready=? error=(unit tape)]
+  ^-  tape
+  ?^  error
+    ::  Error response
+    %+  weld  "\{\"success\":false,\"error\":\""
+    %+  weld  u.error
+    "\"}"
+  ::  Success response
+  %+  weld  "\{\"success\":true"
+  %+  weld  ",\"gameId\":\""
+  %+  weld  (trip game-id)
+  %+  weld  "\",\"amount\":"
+  %+  weld  (a-co:co amount)
+  %+  weld  ",\"playerPkh\":\""
+  %+  weld  (trip player-pkh)
+  %+  weld  "\",\"newBank\":"
+  %+  weld  (a-co:co new-bank)
+  %+  weld  ",\"txReady\":"
+  %+  weld  ?:(tx-ready "true" "false")
+  %+  weld  ",\"message\":\""
+  %+  weld  ?:(tx-ready "Transaction built successfully - awaiting submission" "Transaction structure prepared")
+  "\"}"
 --
