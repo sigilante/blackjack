@@ -103,12 +103,12 @@ function mockSendFunds() {
         updateDisplay();
         updateTransactionList();
         saveState();
-        setStatus(`Deposit of N$${amount} confirmed!`);
+        setStatus(`Deposit of №${amount} confirmed!`);
     }, 3000);
 
     updateTransactionList();
     saveState();
-    setStatus(`Deposit of N$${amount} pending confirmation (mock: 3 seconds)...`);
+    setStatus(`Deposit of №${amount} pending confirmation (mock: 3 seconds)...`);
 
     // Clear inputs
     document.getElementById('send-amount').value = '';
@@ -136,7 +136,7 @@ async function mockCashOut() {
         return;
     }
 
-    setStatus(`Requesting cashout of N$${amount}...`);
+    setStatus(`Requesting cashout of №${amount}...`);
 
     try {
         // Call the cashout endpoint
@@ -198,8 +198,8 @@ async function mockCashOut() {
 
 // Update display
 function updateDisplay() {
-    document.getElementById('available-balance').textContent = `N$${availableBalance}`;
-    document.getElementById('betting-pool').textContent = `N$${bettingPool}`;
+    document.getElementById('available-balance').textContent = `№${availableBalance}`;
+    document.getElementById('betting-pool').textContent = `№${bettingPool}`;
 }
 
 // Update transaction list
@@ -226,7 +226,7 @@ function updateTransactionList() {
         txDiv.innerHTML = `
             <div class="tx-header">
                 <span class="tx-type ${typeClass}">${tx.type.toUpperCase()}</span>
-                <span class="tx-amount">N$${tx.amount}</span>
+                <span class="tx-amount">№${tx.amount}</span>
                 <span class="tx-status ${statusClass}">${tx.status}</span>
             </div>
             <div class="tx-details">
