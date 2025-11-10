@@ -409,7 +409,7 @@ async function startNewGame() {
         localStorage.setItem('blackjack-gameId', gameId);
         localStorage.setItem('blackjack-serverPkh', serverWalletPkh);
 
-        gameState.bank = 1000;  // Initial bank from config
+        gameState.bank = data.bank;  // Initial bank from server
         gameState.currentBet = 0;
         gameState.winLoss = 0;
         gameState.gameInProgress = false;

@@ -42,6 +42,7 @@
       dealer-hand=hand
       outcome=?(%win %loss %push %blackjack)
       payout=@ud
+      bank-after=@ud            :: Bank balance after this hand
       timestamp=@da
   ==
 ::
@@ -374,13 +375,15 @@
   ==
 ::
 ++  make-json-session-created
-  |=  [game-id=@t server-pkh=@t]
+  |=  [game-id=@t server-pkh=@t bank=@ud]
   ^-  tape
   %+  weld  "\{\"gameId\":\""
   %+  weld  (trip game-id)
   %+  weld  "\",\"serverWalletPkh\":\""
   %+  weld  (trip server-pkh)
-  "\"}"
+  %+  weld  "\",\"bank\":"
+  %+  weld  (a-co:co bank)
+  "}"
 ::
 ++  make-json-session-status
   |=  [game-id=@t status=session-status player-pkh=(unit @t) bank=@ud]
@@ -452,6 +455,8 @@
   %+  weld  (scow %tas outcome.hist)
   %+  weld  "\",\"payout\":"
   %+  weld  (a-co:co payout.hist)
+  %+  weld  ",\"bankAfter\":"
+  %+  weld  (a-co:co bank-after.hist)
   "}"
 ::
 ++  history-list-to-json

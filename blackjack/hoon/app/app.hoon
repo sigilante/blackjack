@@ -298,9 +298,9 @@
               status=%awaiting-bet
               history=~
           ==
-        ::  Return session info with server PKH
+        ::  Return session info with server PKH and initial bank
         =/  json=tape
-          (make-json-session-created:blackjack game-id wallet-pkh.config)
+          (make-json-session-created:blackjack game-id wallet-pkh.config bank.initial-game)
         ~&  >>  "Created session: {<game-id>}"
         :_  state(sessions (~(put by sessions.state) game-id new-session))
         :_  ~
@@ -497,6 +497,7 @@
               dealer-hand=final-dealer-hand
               outcome=outcome
               payout=payout
+              bank-after=new-bank
               timestamp=now.input.ovum
           ==
         ::  Append to history (keep last N hands per config)
@@ -575,6 +576,7 @@
                 dealer-hand=dealer-hand-current
                 outcome=%loss
                 payout=0
+                bank-after=new-bank
                 timestamp=now.input.ovum
             ==
           ::  Append to history (keep last N hands per config)
@@ -627,6 +629,7 @@
               dealer-hand=final-dealer-hand
               outcome=outcome
               payout=payout
+              bank-after=final-bank
               timestamp=now.input.ovum
           ==
         ::  Append to history (keep last N hands per config)
