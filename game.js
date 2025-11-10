@@ -1,5 +1,6 @@
 // Server session tracking
-let sessionId = null;
+let gameId = null;
+let serverWalletPkh = null;
 
 // Game State
 const gameState = {
@@ -341,7 +342,7 @@ function clearBet() {
 async function startNewGame() {
     try {
         // Call server API to create new session
-        const response = await fetch('/blackjack/api/new-game', {
+        const response = await fetch('/blackjack/api/session/create', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'}
         });
@@ -353,8 +354,9 @@ async function startNewGame() {
         const data = await response.json();
 
         // Update session and game state from server
-        sessionId = data.sessionId;
-        gameState.bank = data.bank;
+        gameId = data.gameId;
+        serverWalletPkh = data.serverWalletPkh;
+        gameState.bank = 1000;  // Initial bank from config
         gameState.currentBet = 0;
         gameState.winLoss = 0;
         gameState.gameInProgress = false;
@@ -371,7 +373,7 @@ async function startNewGame() {
         document.getElementById('surrender-btn').disabled = true;
 
         updateDisplay();
-        setStatus(`New game started (Session: ${sessionId}). Place your bet and click Deal.`);
+        setStatus(`New session created (${gameId.substring(0, 8)}...). Place your bet and click Deal.`);
     } catch (error) {
         console.error('Error starting new game:', error);
         setStatus('Error connecting to server: ' + error.message);
@@ -391,7 +393,7 @@ async function dealHand() {
     }
 
     // Create session if needed
-    if (!sessionId) {
+    if (!gameId) {
         await startNewGame();
     }
 
@@ -402,11 +404,10 @@ async function dealHand() {
 
     try {
         // Call server API to deal
-        const response = await fetch('/blackjack/api/deal', {
+        const response = await fetch(`/blackjack/api/${gameId}/deal`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                sessionId: sessionId,
                 bet: betAmount
             })
         });
@@ -485,12 +486,9 @@ async function hit() {
 
     try {
         // Call server API to hit
-        const response = await fetch('/blackjack/api/hit', {
+        const response = await fetch(`/blackjack/api/${gameId}/hit`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                sessionId: sessionId
-            })
+            headers: {'Content-Type': 'application/json'}
         });
 
         if (!response.ok) {
@@ -553,12 +551,9 @@ async function stand() {
 
     try {
         // Call server API to stand (dealer plays and resolves)
-        const response = await fetch('/blackjack/api/stand', {
+        const response = await fetch(`/blackjack/api/${gameId}/stand`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                sessionId: sessionId
-            })
+            headers: {'Content-Type': 'application/json'}
         });
 
         if (!response.ok) {
@@ -630,12 +625,9 @@ async function doubleDown() {
 
     try {
         // Call server API to double down
-        const response = await fetch('/blackjack/api/double', {
+        const response = await fetch(`/blackjack/api/${gameId}/double`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                sessionId: sessionId
-            })
+            headers: {'Content-Type': 'application/json'}
         });
 
         if (!response.ok) {

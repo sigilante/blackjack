@@ -13,10 +13,8 @@
 |%
 +$  server-state
   $:  %0
-      ::  Map of client sessions to game state
-      games=(map session-id:blackjack game-state:blackjack)
-      ::  Simple counter for session IDs
-      next-session-id=@ud
+      ::  Map of game-id to session state (multi-session architecture)
+      sessions=(map game-id:blackjack session-state:blackjack)
   ==
 --
 ::  Application logic
@@ -26,6 +24,16 @@
 ::
 ++  inner
   |_  state=server-state
+  ::
+  ::  Server configuration (hardcoded for now)
+  ::
+  ++  server-config
+    ^-  server-config:blackjack
+    :*  wallet-pkh='9yPePjfWAdUnzaQKyxcRXKRa5PpUzKKEwtpECBZsUYt9Jd7egSDEWoV'
+        confirmation-blocks=3
+        enable-blockchain=%.n
+        initial-bank=1.000
+    ==
   ::
   ::  +load: upgrade from previous state
   ::
@@ -140,24 +148,33 @@
         ~&  "No POST route matched for: {<uri>}"
         [~[[%res ~ %500 ~ ~]] state]
         ::
-          :: Initialize new game session
-          [%blackjack %api %new-game ~]
-        ~&  "Matched /blackjack/api/new-game route"
-        =/  session-id=@ud  next-session-id.state
-        =/  new-game=game-state:blackjack
-          :*  deck=*(list card:blackjack)
-              player-hand=*(list (list card:blackjack))
-              dealer-hand=*(list (list card:blackjack))
-              bank=1.000
-              current-bet=0
-              win-loss=--0
-              game-in-progress=%.n
-              dealer-turn=%.n
+          :: Create new game session
+          [%blackjack %api %session %create ~]
+        ~&  "Matched /blackjack/api/session/create route"
+        ::  Generate UUID from entropy
+        =/  game-id=@t  (generate-uuid:blackjack entropy)
+        ~&  "Generated game-id: {<game-id>}"
+        ::  Create initial game state
+        =/  config=server-config:blackjack  server-config
+        =/  initial-game=game-state-inner:blackjack
+          (initial-game-state:blackjack initial-bank.config)
+        ::  Create session state
+        =/  new-session=session-state:blackjack
+          :*  game-id=game-id
+              player-pkh=~
+              bet-tx-hash=~
+              bet-status=%pending
+              confirmed-amount=0
+              game=initial-game
+              created=now.input.ovum
+              last-activity=now.input.ovum
+              status=%awaiting-bet
           ==
+        ::  Return session info with server PKH
         =/  json=tape
-          (make-json-new-game:blackjack session-id 1.000)
-        ~&  "Sending JSON response: {<json>}"
-        :_  state(games (~(put by games.state) session-id new-game), next-session-id +(next-session-id.state))
+          (make-json-session-created:blackjack game-id wallet-pkh.config)
+        ~&  "Created session: {<game-id>}"
+        :_  state(sessions (~(put by sessions.state) game-id new-session))
         :_  ~
         ^-  effect:http
         :*  %res  id=id  %200
@@ -166,35 +183,23 @@
             (to-octs:http (crip json))
         ==
         ::  Deal initial hands
-          [%blackjack %api %deal ~]
-        ::  Parse body to get session-id and bet
+          [%blackjack %api game-id %deal ~]
+        ~&  "Matched /blackjack/api/{<game-id>}/deal route"
+        ::  Parse body to get bet amount
         ?~  body
           [~[[%res ~ %400 ~ ~]] state]
         =/  body-text=tape  (trip q.u.body)
-        ~&  "Deal body: {<body-text>}"
-        =/  session-id-parsed=(unit @ud)  (parse-json-number:blackjack "sessionId" body-text)
         =/  bet-parsed=(unit @ud)  (parse-json-number:blackjack "bet" body-text)
-        ~&  "Parsed sessionId: {<session-id-parsed>}"
-        ~&  "Parsed bet: {<bet-parsed>}"
-        =/  session-id=@ud  ?~(session-id-parsed 0 u.session-id-parsed)
         =/  bet=@ud  ?~(bet-parsed 100 u.bet-parsed)
-        ~&  "Using sessionId: {<session-id>}, bet: {<bet>}"
+        ~&  "Using bet: {<bet>}"
         ::
-        ::  Get or create game state
-        =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
-        =/  current-game=game-state:blackjack
-          ?~  existing
-            ::  Create new game if doesn't exist
-            :*  deck=*(list card:blackjack)
-                player-hand=*(list (list card:blackjack))
-                dealer-hand=*(list (list card:blackjack))
-                bank=1.000
-                current-bet=0
-                win-loss=--0
-                game-in-progress=%.n
-                dealer-turn=%.n
-            ==
-          u.existing
+        ::  Get session state
+        =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
+        ?~  existing
+          ~&  "Session not found: {<game-id>}"
+          [~[[%res ~ %404 ~ ~]] state]
+        =/  current-session=session-state:blackjack  u.existing
+        =/  current-game=game-state-inner:blackjack  game.current-session
         ::
         ::  Check if player can afford the bet
         ?:  (gth bet bank.current-game)
@@ -214,14 +219,19 @@
         =/  dealer-visible=card:blackjack  (snag 1 (snag 0 dealer-hand))
         ::
         ::  Update game state with bet deducted
-        =/  updated-game=game-state:blackjack
-          current-game(deck remaining-deck, player-hand player-hand, dealer-hand dealer-hand, current-bet bet, bank new-bank, game-in-progress %.y, dealer-turn %.n)
+        =/  updated-game=game-state-inner:blackjack
+          current-game(deck remaining-deck, player-hand player-hand, dealer-hand dealer-hand, current-bet bet, bank new-bank, game-in-progress %.y, dealer-turn %.n, hands-played +(hands-played.current-game))
+        ::
+        ::  Update session state (set status to active)
+        =/  updated-session=session-state:blackjack
+          current-session(game updated-game, last-activity now.input.ovum, status %active)
         ~&  "Updated game - current-bet: {<current-bet.updated-game>}, bank: {<bank.updated-game>}"
         ::
+        ::  Build response (note: using 0 for backward compat with old sessionId field)
         =/  json=tape
-          (make-json-deal:blackjack player-hand dealer-hand player-score dealer-visible session-id new-bank)
+          (make-json-deal:blackjack player-hand dealer-hand player-score dealer-visible 0 new-bank)
         ::
-        :_  state(games (~(put by games.state) session-id updated-game))
+        :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
         ^-  effect:http
         :*  %res  id=id  %200
@@ -230,18 +240,15 @@
             (to-octs:http (crip json))
         ==
         ::
-          [%blackjack %api %hit ~]
-        ::  Player hits (draw card)
-        ?~  body
-          [~[[%res ~ %400 ~ ~]] state]
-        =/  body-text=tape  (trip q.u.body)
-        =/  session-id-parsed=(unit @ud)  (parse-json-number:blackjack "sessionId" body-text)
-        =/  session-id=@ud  ?~(session-id-parsed 0 u.session-id-parsed)
-        ::
-        =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
+          [%blackjack %api game-id %hit ~]
+        ~&  "Matched /blackjack/api/{<game-id>}/hit route"
+        ::  Get session state
+        =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
+          ~&  "Session not found: {<game-id>}"
           [~[[%res ~ %404 ~ ~]] state]
-        =/  current-game=game-state:blackjack  u.existing
+        =/  current-session=session-state:blackjack  u.existing
+        =/  current-game=game-state-inner:blackjack  game.current-session
         ::
         ::  Draw card
         =+  [new-card remaining-deck]=(draw-card:blackjack deck.current-game)
@@ -250,15 +257,19 @@
         =/  busted=?  (is-busted:blackjack new-player-hand)
         ::
         ::  Update game (end game if busted)
-        =/  updated-game=game-state:blackjack
+        =/  updated-game=game-state-inner:blackjack
           ?:  busted
             current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), game-in-progress %.n)
           current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand))
         ::
+        ::  Update session state
+        =/  updated-session=session-state:blackjack
+          current-session(game updated-game, last-activity now.input.ovum, status ?:(busted %ended %active))
+        ::
         =/  json=tape
           (make-json-hit:blackjack new-card new-player-hand new-score busted bank.updated-game)
         ::
-        :_  state(games (~(put by games.state) session-id updated-game))
+        :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
         ^-  effect:http
         :*  %res  id=id  %200
@@ -267,18 +278,15 @@
             (to-octs:http (crip json))
         ==
         ::
-          [%blackjack %api %stand ~]
-        ::  Player stands, dealer plays
-        ?~  body
-          [~[[%res ~ %400 ~ ~]] state]
-        =/  body-text=tape  (trip q.u.body)
-        =/  session-id-parsed=(unit @ud)  (parse-json-number:blackjack "sessionId" body-text)
-        =/  session-id=@ud  ?~(session-id-parsed 0 u.session-id-parsed)
-        ::
-        =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
+          [%blackjack %api game-id %stand ~]
+        ~&  "Matched /blackjack/api/{<game-id>}/stand route"
+        ::  Get session state
+        =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
+          ~&  "Session not found: {<game-id>}"
           [~[[%res ~ %404 ~ ~]] state]
-        =/  current-game=game-state:blackjack  u.existing
+        =/  current-session=session-state:blackjack  u.existing
+        =/  current-game=game-state-inner:blackjack  game.current-session
         ::
         ::  Dealer plays
         =/  final-dealer-hand=hand:blackjack  (snag 0 dealer-hand.current-game)
@@ -299,13 +307,17 @@
         =/  dealer-score=@ud  (hand-value:blackjack final-dealer-hand)
         ::
         ::  Update game
-        =/  updated-game=game-state:blackjack
+        =/  updated-game=game-state-inner:blackjack
           current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), deck remaining-deck, bank new-bank, game-in-progress %.n)
+        ::
+        ::  Update session state (set status to ended)
+        =/  updated-session=session-state:blackjack
+          current-session(game updated-game, last-activity now.input.ovum, status %ended)
         ::
         =/  json=tape
           (make-json-stand:blackjack final-dealer-hand dealer-score outcome payout new-bank)
         ::
-        :_  state(games (~(put by games.state) session-id updated-game))
+        :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
         ^-  effect:http
         :*  %res  id=id  %200
@@ -314,18 +326,15 @@
             (to-octs:http (crip json))
         ==
         ::
-          [%blackjack %api %double ~]
-        ::  Player doubles down (double bet, hit once, auto-stand)
-        ?~  body
-          [~[[%res ~ %400 ~ ~]] state]
-        =/  body-text=tape  (trip q.u.body)
-        =/  session-id-parsed=(unit @ud)  (parse-json-number:blackjack "sessionId" body-text)
-        =/  session-id=@ud  ?~(session-id-parsed 0 u.session-id-parsed)
-        ::
-        =/  existing=(unit game-state:blackjack)  (~(get by games.state) session-id)
+          [%blackjack %api game-id %double ~]
+        ~&  "Matched /blackjack/api/{<game-id>}/double route"
+        ::  Get session state
+        =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
+          ~&  "Session not found: {<game-id>}"
           [~[[%res ~ %404 ~ ~]] state]
-        =/  current-game=game-state:blackjack  u.existing
+        =/  current-session=session-state:blackjack  u.existing
+        =/  current-game=game-state-inner:blackjack  game.current-session
         ::
         ::  Check if player can afford to double
         ?:  (gth current-bet.current-game bank.current-game)
@@ -344,11 +353,14 @@
         ?:  player-busted
           =/  dealer-hand-current=hand:blackjack  (snag 0 dealer-hand.current-game)
           =/  dealer-score=@ud  (hand-value:blackjack dealer-hand-current)
-          =/  final-game=game-state:blackjack
+          =/  final-game=game-state-inner:blackjack
             current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet doubled-bet, bank new-bank, game-in-progress %.n)
+          ::  Update session state (set status to ended)
+          =/  final-session=session-state:blackjack
+            current-session(game final-game, last-activity now.input.ovum, status %ended)
           =/  json=tape
             (make-json-double:blackjack new-player-hand dealer-hand-current dealer-score %loss 0 new-bank)
-          :_  state(games (~(put by games.state) session-id final-game))
+          :_  state(sessions (~(put by sessions.state) game-id final-session))
           :_  ~
           ^-  effect:http
           :*  %res  id=id  %200
@@ -372,13 +384,17 @@
         =/  dealer-score=@ud  (hand-value:blackjack final-dealer-hand)
         ::
         ::  Update game
-        =/  final-game=game-state:blackjack
+        =/  final-game=game-state-inner:blackjack
           current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), player-hand (snap player-hand.current-game 0 new-player-hand), deck deck-for-dealer, current-bet doubled-bet, bank final-bank, game-in-progress %.n)
+        ::
+        ::  Update session state (set status to ended)
+        =/  final-session=session-state:blackjack
+          current-session(game final-game, last-activity now.input.ovum, status %ended)
         ::
         =/  json=tape
           (make-json-double:blackjack new-player-hand final-dealer-hand dealer-score outcome payout final-bank)
         ::
-        :_  state(games (~(put by games.state) session-id final-game))
+        :_  state(sessions (~(put by sessions.state) game-id final-session))
         :_  ~
         ^-  effect:http
         :*  %res  id=id  %200

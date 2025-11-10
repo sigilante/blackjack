@@ -17,18 +17,57 @@
 ::  Hand of cards
 +$  hand  (list card)  :: could plausibly be a (set card)
 ::
-::  Game state
-+$  session-id  @ud
+::  Session and game state
++$  game-id  @t  :: UUID-style identifier
++$  session-id  @ud  :: Old style, kept for compatibility
 ::
-+$  game-state
++$  bet-status
+  $?  %pending      :: Transaction submitted, waiting for confirmations
+      %confirmed    :: Transaction has required confirmations
+      %failed       :: Transaction failed or invalid
+  ==
+::
++$  session-status
+  $?  %awaiting-bet    :: Session created, waiting for bet transaction
+      %bet-pending     :: Bet transaction seen, waiting for confirmations
+      %active          :: Bet confirmed, game in progress
+      %ended           :: Game ended, waiting for payout
+      %paid-out        :: Payout transaction broadcast
+      %closed          :: Session closed
+  ==
+::
++$  session-state
+  $:  game-id=@t
+      player-pkh=(unit @t)        :: Player's public key hash
+      bet-tx-hash=(unit @t)       :: Transaction hash of initial bet
+      bet-status=bet-status       :: Status of bet transaction
+      confirmed-amount=@ud        :: Amount confirmed on-chain (0 if pending)
+      game=game-state-inner       :: Actual game state
+      created=@da
+      last-activity=@da
+      status=session-status
+  ==
+::
++$  game-state-inner
   $:  deck=(list card)
       player-hand=(list hand)  :: list for splitting hands
       dealer-hand=(list hand)
       bank=@ud
       current-bet=@ud
       win-loss=@sd
+      hands-played=@ud         :: Track number of hands
       game-in-progress=?
       dealer-turn=?
+  ==
+::
+:: Old game-state type for backward compatibility
++$  game-state  game-state-inner
+::
++$  server-config
+  $:  wallet-pkh=@t                :: Server's PKH from config
+      confirmation-blocks=@ud      :: Required confirmations
+      enable-blockchain=?          :: Toggle blockchain integration
+      initial-bank=@ud             :: Initial bank for new sessions
   ==
 --
 ::  Game mechanics
@@ -291,6 +330,56 @@
   %+  weld  (scow %tas outcome)
   %+  weld  "\",\"payout\":"
   %+  weld  (a-co:co payout)
+  %+  weld  ",\"bank\":"
+  %+  weld  (a-co:co bank)
+  "}"
+::
+::  Session management helpers
+++  generate-uuid
+  |=  ent=@
+  ^-  @t
+  ::  Generate UUID-style identifier using entropy
+  =/  hex=tape  (scow %ux ent)
+  =/  uuid=tape
+    %+  weld  (scag 8 hex)
+    %+  weld  "-"
+    %+  weld  (scag 4 (slag 8 hex))
+    %+  weld  "-"
+    (scag 12 (slag 12 hex))
+  (crip uuid)
+::
+++  initial-game-state
+  |=  initial-bank=@ud
+  ^-  game-state-inner
+  :*  deck=~
+      player-hand=~
+      dealer-hand=~
+      bank=initial-bank
+      current-bet=0
+      win-loss=--0
+      hands-played=0
+      game-in-progress=%.n
+      dealer-turn=%.n
+  ==
+::
+++  make-json-session-created
+  |=  [game-id=@t server-pkh=@t]
+  ^-  tape
+  %+  weld  "\{\"gameId\":\""
+  %+  weld  (trip game-id)
+  %+  weld  "\",\"serverWalletPkh\":\""
+  %+  weld  (trip server-pkh)
+  "\"}"
+::
+++  make-json-session-status
+  |=  [game-id=@t status=session-status player-pkh=(unit @t) bank=@ud]
+  ^-  tape
+  %+  weld  "\{\"gameId\":\""
+  %+  weld  (trip game-id)
+  %+  weld  "\",\"status\":\""
+  %+  weld  (scow %tas status)
+  %+  weld  "\",\"playerPkh\":"
+  %+  weld  ?~(player-pkh "null" (weld "\"" (weld (trip u.player-pkh) "\"")))
   %+  weld  ",\"bank\":"
   %+  weld  (a-co:co bank)
   "}"
