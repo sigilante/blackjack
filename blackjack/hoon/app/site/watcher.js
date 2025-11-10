@@ -1,6 +1,7 @@
 // Watcher state
 let currentSessionId = null;
 let refreshInterval = null;
+let lastSessionState = null; // Track last rendered state for change detection
 
 // Card suits and ranks (same as game.js)
 const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
@@ -18,12 +19,14 @@ async function init() {
     document.getElementById('session-selector').addEventListener('change', async (e) => {
         const gameId = e.target.value;
         if (gameId) {
+            lastSessionState = null; // Reset state when changing sessions
             await loadSession(gameId);
-            // Auto-refresh every 2 seconds when watching a session
+            // Auto-refresh every 4 seconds when watching a session
             if (refreshInterval) clearInterval(refreshInterval);
-            refreshInterval = setInterval(() => loadSession(gameId), 2000);
+            refreshInterval = setInterval(() => loadSession(gameId), 4000);
         } else {
             if (refreshInterval) clearInterval(refreshInterval);
+            lastSessionState = null;
             clearDisplay();
         }
     });
@@ -49,7 +52,7 @@ async function refreshSessions() {
         data.sessions.forEach(session => {
             const option = document.createElement('option');
             option.value = session.gameId;
-            option.textContent = `${session.gameId.substring(0, 8)}... (${session.status}, $${session.bank}, ${session.handsPlayed} hands)`;
+            option.textContent = `${session.gameId.substring(0, 8)}... (${session.status}, $${session.bank}, ${session.dealsMade} deals)`;
             selector.appendChild(option);
         });
 
@@ -79,6 +82,23 @@ async function loadSession(gameId) {
 
         const session = await response.json();
         currentSessionId = gameId;
+
+        // Create state fingerprint for change detection
+        const stateFingerprint = JSON.stringify({
+            status: session.status,
+            bank: session.bank,
+            currentBet: session.currentBet,
+            playerHand: session.playerHand,
+            dealerHand: session.dealerHand,
+            dealerTurn: session.dealerTurn,
+            historyLength: (session.history || []).length
+        });
+
+        // Check if state has changed
+        if (lastSessionState === stateFingerprint) {
+            return; // No changes, skip DOM updates
+        }
+        lastSessionState = stateFingerprint;
 
         // Update info displays
         document.getElementById('game-id-display').textContent = gameId.substring(0, 12) + '...';
@@ -174,12 +194,14 @@ function updateHand(player, hand, showAll) {
 // Update history display
 function updateHistory(history) {
     const container = document.getElementById('history-container');
-    container.innerHTML = '';
 
     if (history.length === 0) {
         container.innerHTML = '<div class="history-empty">No hands played yet</div>';
         return;
     }
+
+    // Use DocumentFragment for efficient batch DOM operations
+    const fragment = document.createDocumentFragment();
 
     history.forEach((entry, index) => {
         const historyEntry = document.createElement('div');
@@ -188,12 +210,27 @@ function updateHistory(history) {
         // Entry header with outcome
         const header = document.createElement('div');
         header.className = 'history-entry-header';
-        header.innerHTML = `
-            <span class="history-hand-number">#${history.length - index}</span>
-            <span class="history-outcome history-outcome-${entry.outcome}">${entry.outcome.toUpperCase()}</span>
-            <span class="history-bet">Bet: $${entry.bet}</span>
-            <span class="history-payout">Payout: $${entry.payout}</span>
-        `;
+
+        const handNumber = document.createElement('span');
+        handNumber.className = 'history-hand-number';
+        handNumber.textContent = `#${history.length - index}`;
+
+        const outcome = document.createElement('span');
+        outcome.className = `history-outcome history-outcome-${entry.outcome}`;
+        outcome.textContent = entry.outcome.toUpperCase();
+
+        const bet = document.createElement('span');
+        bet.className = 'history-bet';
+        bet.textContent = `Bet: $${entry.bet}`;
+
+        const payout = document.createElement('span');
+        payout.className = 'history-payout';
+        payout.textContent = `Payout: $${entry.payout}`;
+
+        header.appendChild(handNumber);
+        header.appendChild(outcome);
+        header.appendChild(bet);
+        header.appendChild(payout);
         historyEntry.appendChild(header);
 
         // Hands display
@@ -203,26 +240,50 @@ function updateHistory(history) {
         // Player hand
         const playerHandDiv = document.createElement('div');
         playerHandDiv.className = 'history-hand';
-        playerHandDiv.innerHTML = '<span class="history-hand-label">P:</span>';
+
+        const playerLabel = document.createElement('span');
+        playerLabel.className = 'history-hand-label';
+        playerLabel.textContent = 'P:';
+        playerHandDiv.appendChild(playerLabel);
+
         entry.playerHand.forEach(card => {
             playerHandDiv.appendChild(renderTinyCard(card));
         });
-        playerHandDiv.innerHTML += `<span class="history-score">${calculateHandValue(entry.playerHand)}</span>`;
+
+        const playerScore = document.createElement('span');
+        playerScore.className = 'history-score';
+        playerScore.textContent = calculateHandValue(entry.playerHand);
+        playerHandDiv.appendChild(playerScore);
+
         handsDiv.appendChild(playerHandDiv);
 
         // Dealer hand
         const dealerHandDiv = document.createElement('div');
         dealerHandDiv.className = 'history-hand';
-        dealerHandDiv.innerHTML = '<span class="history-hand-label">D:</span>';
+
+        const dealerLabel = document.createElement('span');
+        dealerLabel.className = 'history-hand-label';
+        dealerLabel.textContent = 'D:';
+        dealerHandDiv.appendChild(dealerLabel);
+
         entry.dealerHand.forEach(card => {
             dealerHandDiv.appendChild(renderTinyCard(card));
         });
-        dealerHandDiv.innerHTML += `<span class="history-score">${calculateHandValue(entry.dealerHand)}</span>`;
+
+        const dealerScore = document.createElement('span');
+        dealerScore.className = 'history-score';
+        dealerScore.textContent = calculateHandValue(entry.dealerHand);
+        dealerHandDiv.appendChild(dealerScore);
+
         handsDiv.appendChild(dealerHandDiv);
 
         historyEntry.appendChild(handsDiv);
-        container.appendChild(historyEntry);
+        fragment.appendChild(historyEntry);
     });
+
+    // Single DOM operation to replace all history
+    container.innerHTML = '';
+    container.appendChild(fragment);
 }
 
 // Clear the display
