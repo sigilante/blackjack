@@ -107,8 +107,8 @@ async function loadSession(gameId) {
         document.getElementById('current-bet').textContent = `$${session.currentBet}`;
 
         // Update hands
-        updateHand('player', session.playerHand || [], !session.dealerTurn);
-        updateHand('dealer', session.dealerHand || [], session.dealerTurn);
+        updateHand('player', session.playerHand || [], true);  // Always show all player cards
+        updateHand('dealer', session.dealerHand || [], !session.gameInProgress || session.dealerTurn);  // Show all dealer cards when game ended
 
         // Update history
         updateHistory(session.history || []);

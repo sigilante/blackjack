@@ -448,7 +448,12 @@ async function dealHand() {
 
     // Create session if needed
     if (!gameId) {
+        // Save the current bet before creating session (startNewGame resets state)
+        const savedBet = gameState.currentBet;
         await startNewGame();
+        // Restore the bet after session creation
+        gameState.currentBet = savedBet;
+        updateDisplay();
     }
 
     // Optimistically update bank immediately for instant visual feedback
