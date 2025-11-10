@@ -74,19 +74,19 @@
       +.u.sof-cau
     ~&  "Received request: {<method>} {<uri>}"
     =/  uri=path  (pa:dejs:http [%s uri])
-    ~&  "Parsed path: {<uri>}"
-    ~&  "Method: {<method>}"
+    ~&  >>  "Parsed path: {<uri>}"
+    ~&  >>  "Method: {<method>}"
     ::  Handle GET/POST requests
     ?+    method  [~[[%res ~ %400 ~ ~]] state]
       ::
         %'GET'
       ?+    uri
-        ~&  "No route matched, returning 404 for: {<uri>}"
+        ~&  >>>  "No route matched, returning 404 for: {<uri>}"
         [~[[%res ~ %404 ~ ~]] state]
         ::
           :: Serve index.html at /blackjack
           [%blackjack ~]
-        ~&  "Matched route: /blackjack (index.html)"
+        ~&  >>  "Matched route: /blackjack (index.html)"
         :_  state
         ^-  (list effect:http)
         :_  ~
@@ -102,8 +102,8 @@
         ::
           :: Serve style.css at /blackjack/style.css
           [%blackjack %'style.css' ~]
-        ~&  "Matched route: /blackjack/style.css"
-        ~&  "CSS length: {<(met 3 q.style)>} bytes"
+        ~&  >>  "Matched route: /blackjack/style.css"
+        ~&  >>  "CSS length: {<(met 3 q.style)>} bytes"
         :_  state
         :_  ~
         ^-  effect:http
@@ -118,8 +118,8 @@
         ::
           :: Serve game.js at /blackjack/game.js
           [%blackjack %'game.js' ~]
-        ~&  "Matched route: /blackjack/game.js"
-        ~&  "JS length: {<(met 3 q.game)>} bytes"
+        ~&  >>  "Matched route: /blackjack/game.js"
+        ~&  >>  "JS length: {<(met 3 q.game)>} bytes"
         :_  state
         :_  ~
         ^-  effect:http
@@ -134,7 +134,7 @@
         ::
           :: Serve sprites.png at /blackjack/img/sprites.png
           [%blackjack %img %'sprites.png' ~]
-        ~&  "Matched route: /blackjack/img/sprites.png"
+        ~&  >>  "Matched route: /blackjack/img/sprites.png"
         :_  state
         :_  ~
         ^-  effect:http
@@ -149,7 +149,7 @@
         ::
           :: Serve watcher.html
           [%blackjack %'watcher.html' ~]
-        ~&  "Matched route: /blackjack/watcher.html"
+        ~&  >>  "Matched route: /blackjack/watcher.html"
         :_  state
         :_  ~
         ^-  effect:http
@@ -162,7 +162,7 @@
         ::
           :: Serve watcher.js
           [%blackjack %'watcher.js' ~]
-        ~&  "Matched route: /blackjack/watcher.js"
+        ~&  >>  "Matched route: /blackjack/watcher.js"
         :_  state
         :_  ~
         ^-  effect:http
@@ -175,7 +175,7 @@
         ::
           :: Serve watcher.css
           [%blackjack %'watcher.css' ~]
-        ~&  "Matched route: /blackjack/watcher.css"
+        ~&  >>  "Matched route: /blackjack/watcher.css"
         :_  state
         :_  ~
         ^-  effect:http
@@ -188,7 +188,7 @@
         ::
           :: Serve wallet.html
           [%blackjack %'wallet.html' ~]
-        ~&  "Matched route: /blackjack/wallet.html"
+        ~&  >>  "Matched route: /blackjack/wallet.html"
         :_  state
         :_  ~
         ^-  effect:http
@@ -201,7 +201,7 @@
         ::
           :: Serve wallet.js
           [%blackjack %'wallet.js' ~]
-        ~&  "Matched route: /blackjack/wallet.js"
+        ~&  >>  "Matched route: /blackjack/wallet.js"
         :_  state
         :_  ~
         ^-  effect:http
@@ -214,7 +214,7 @@
         ::
           :: Serve wallet.css
           [%blackjack %'wallet.css' ~]
-        ~&  "Matched route: /blackjack/wallet.css"
+        ~&  >>  "Matched route: /blackjack/wallet.css"
         :_  state
         :_  ~
         ^-  effect:http
@@ -227,7 +227,7 @@
         ::
           :: GET /api/sessions - List all active sessions
           [%blackjack %api %sessions ~]
-        ~&  "Matched route: GET /blackjack/api/sessions"
+        ~&  >>  "Matched route: GET /blackjack/api/sessions"
         ::  Extract session info from all sessions
         =/  session-list=(list [game-id=@t status=session-status:blackjack bank=@ud deals-made=@ud])
           %+  turn  ~(tap by sessions.state)
@@ -248,10 +248,10 @@
           :: GET /api/{game-id}/status - Get full session state
           [%blackjack %api game-id:blackjack %status ~]
         =/  =game-id:blackjack  (snag 2 `path`uri)
-        ~&  "Matched route: GET /blackjack/api/{<game-id>}/status"
+        ~&  >>  "Matched route: GET /blackjack/api/{<game-id>}/status"
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
-          ~&  "Session not found: {<game-id>}"
+          ~&  >>>  "Session not found: {<game-id>}"
           =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
           :_  state
           :_  ~
@@ -270,17 +270,17 @@
       ==  :: end GET
       ::
         %'POST'
-      ~&  "POST request detected!"
+      ~&  >>  "POST request detected!"
       ?+    uri
-        ~&  "No POST route matched for: {<uri>}"
+        ~&  >>  "No POST route matched for: {<uri>}"
         [~[[%res ~ %500 ~ ~]] state]
         ::
           :: Create new game session
           [%blackjack %api %session %create ~]
-        ~&  "Matched /blackjack/api/session/create route"
+        ~&  >>  "Matched /blackjack/api/session/create route"
         ::  Generate UUID from entropy
         =/  =game-id:blackjack  (generate-uuid:blackjack entropy)
-        ~&  "Generated game-id: {<game-id>}"
+        ~&  >>  "Generated game-id: {<game-id>}"
         ::  Create initial game state
         =/  config=server-config:blackjack  server-config
         =/  initial-game=game-state-inner:blackjack
@@ -301,7 +301,7 @@
         ::  Return session info with server PKH
         =/  json=tape
           (make-json-session-created:blackjack game-id wallet-pkh.config)
-        ~&  "Created session: {<game-id>}"
+        ~&  >>  "Created session: {<game-id>}"
         :_  state(sessions (~(put by sessions.state) game-id new-session))
         :_  ~
         ^-  effect:http
@@ -313,7 +313,7 @@
         ::  Deal initial hands
           [%blackjack %api game-id:blackjack %deal ~]
         =/  =game-id:blackjack  (snag 2 `path`uri)
-        ~&  "Matched /blackjack/api/{<game-id>}/deal route"
+        ~&  >>  "Matched /blackjack/api/{<game-id>}/deal route"
         ::  Parse body to get bet amount
         ?~  body
           =/  error-json=tape  (make-json-error:blackjack 400 "Missing request body")
@@ -323,12 +323,12 @@
         =/  body-text=tape  (trip q.u.body)
         =/  bet-parsed=(unit @ud)  (parse-json-number:blackjack "bet" body-text)
         =/  bet=@ud  ?~(bet-parsed 100 u.bet-parsed)
-        ~&  "Using bet: {<bet>}"
+        ~&  >>  "Using bet: {<bet>}"
         ::
         ::  Get session state
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
-          ~&  "Session not found: {<game-id>}"
+          ~&  >>>  "Session not found: {<game-id>}"
           =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
           :_  state
           :_  ~
@@ -372,7 +372,7 @@
         ::  Update session state (set status to active)
         =/  updated-session=session-state:blackjack
           current-session(game updated-game, last-activity now.input.ovum, status %active)
-        ~&  "Updated game - current-bet: {<current-bet.updated-game>}, bank: {<bank.updated-game>}"
+        ~&  >>  "Updated game - current-bet: {<current-bet.updated-game>}, bank: {<bank.updated-game>}"
         ::
         ::  Build response (note: using 0 for backward compat with old sessionId field)
         =/  json=tape
@@ -389,11 +389,11 @@
         ::
           [%blackjack %api game-id:blackjack %hit ~]
         =/  =game-id:blackjack  (snag 2 `path`uri)
-        ~&  "Matched /blackjack/api/{<game-id>}/hit route"
+        ~&  >>  "Matched /blackjack/api/{<game-id>}/hit route"
         ::  Get session state
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
-          ~&  "Session not found: {<game-id>}"
+          ~&  >>>  "Session not found: {<game-id>}"
           =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
           :_  state
           :_  ~
@@ -440,11 +440,11 @@
         ::
           [%blackjack %api game-id:blackjack %stand ~]
         =/  =game-id:blackjack  (snag 2 `path`uri)
-        ~&  "Matched /blackjack/api/{<game-id>}/stand route"
+        ~&  >>  "Matched /blackjack/api/{<game-id>}/stand route"
         ::  Get session state
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
-          ~&  "Session not found: {<game-id>}"
+          ~&  >>>  "Session not found: {<game-id>}"
           =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
           :_  state
           :_  ~
@@ -470,18 +470,18 @@
           $(final-dealer-hand (snoc final-dealer-hand new-card), remaining-deck new-deck)
         ::
         ::  Resolve outcome
-        ~&  "Stand - current-bet: {<current-bet.current-game>}, bank: {<bank.current-game>}"
+        ~&  >  "Stand - current-bet: {<current-bet.current-game>}, bank: {<bank.current-game>}"
         =+  [outcome multiplier]=(resolve-outcome:blackjack (snag 0 player-hand.current-game) final-dealer-hand)
-        ~&  "Outcome: {<outcome>}, multiplier: {<multiplier>}"
+        ~&  >  "Outcome: {<outcome>}, multiplier: {<multiplier>}"
         =/  payout=@ud  (mul current-bet.current-game multiplier)
-        ~&  "Payout: {<payout>}"
+        ~&  >  "Payout: {<payout>}"
         =/  new-bank=@ud  (add bank.current-game payout)
-        ~&  "New bank: {<new-bank>}"
+        ~&  >  "New bank: {<new-bank>}"
         =/  dealer-score=@ud  (hand-value:blackjack final-dealer-hand)
         ::
         ::  Calculate win/loss change (payout includes return of bet)
         =/  profit=@sd
-          =/  raw-profit=@s  (dif:si --payout --current-bet.current-game)
+          =/  raw-profit=@s  (dif:si (sun:si payout) (sun:si current-bet.current-game))
           ?:  (syn:si raw-profit)  raw-profit
           (new:si %.n (abs:si raw-profit))
         =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
@@ -522,11 +522,11 @@
         ::
           [%blackjack %api game-id:blackjack %double ~]
         =/  =game-id:blackjack  (snag 2 `path`uri)
-        ~&  "Matched /blackjack/api/{<game-id>}/double route"
+        ~&  >>  "Matched /blackjack/api/{<game-id>}/double route"
         ::  Get session state
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
-          ~&  "Session not found: {<game-id>}"
+          ~&  >>>  "Session not found: {<game-id>}"
           =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
           :_  state
           :_  ~
@@ -611,7 +611,7 @@
         ::
         ::  Calculate win/loss change (payout includes return of bet)
         =/  profit=@sd
-          =/  raw-profit=@s  (dif:si --payout --doubled-bet)
+          =/  raw-profit=@s  (dif:si (sun:si payout) (sun:si doubled-bet))
           ?:  (syn:si raw-profit)  raw-profit
           (new:si %.n (abs:si raw-profit))
         =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)

@@ -400,7 +400,7 @@
   ^-  tape
   %+  weld  "\{\"error\":\""
   %+  weld  message
-  "\",\"code\":"
+  %+  weld  "\",\"code\":"
   %+  weld  (a-co:co code)
   "}"
 ::
