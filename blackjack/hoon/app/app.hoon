@@ -241,6 +241,7 @@
         ^-  effect:http
         :*  %res  id=id  %200
             :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
             (to-octs:http (crip json))
         ==
@@ -264,6 +265,7 @@
         ^-  effect:http
         :*  %res  id=id  %200
             :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
             (to-octs:http (crip json))
         ==
@@ -307,6 +309,7 @@
         ^-  effect:http
         :*  %res  id=id  %200
             :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
             (to-octs:http (crip json))
         ==
@@ -383,6 +386,7 @@
         ^-  effect:http
         :*  %res  id=id  %200
             :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
             (to-octs:http (crip json))
         ==
@@ -434,6 +438,7 @@
         ^-  effect:http
         :*  %res  id=id  %200
             :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
             (to-octs:http (crip json))
         ==
@@ -517,6 +522,7 @@
         ^-  effect:http
         :*  %res  id=id  %200
             :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
             (to-octs:http (crip json))
         ==
@@ -593,6 +599,7 @@
           ^-  effect:http
           :*  %res  id=id  %200
               :~  ['Content-Type' 'application/json']
+                  ['Cache-Control' 'no-cache, no-store, must-revalidate']
               ==
               (to-octs:http (crip json))
           ==
@@ -649,6 +656,7 @@
         ^-  effect:http
         :*  %res  id=id  %200
             :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
             (to-octs:http (crip json))
         ==

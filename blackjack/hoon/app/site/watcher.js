@@ -1,6 +1,7 @@
 // Watcher state
 let currentSessionId = null;
 let refreshInterval = null;
+let sessionsListRefreshInterval = null;  // For auto-refreshing sessions list
 let lastSessionState = null; // Track last rendered state for change detection
 
 // Card suits and ranks (same as game.js)
@@ -14,6 +15,9 @@ const rankValues = {
 // Initialize
 async function init() {
     await refreshSessions();
+
+    // Auto-refresh sessions list every 10 seconds to catch new sessions
+    sessionsListRefreshInterval = setInterval(refreshSessions, 10000);
 
     // Set up session selector listener
     document.getElementById('session-selector').addEventListener('change', async (e) => {
