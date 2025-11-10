@@ -12,14 +12,18 @@ path = "src/main.rs"
 [dependencies]
 # NockVM dependency
 nockapp = { git = "https://github.com/sigilante/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
+nockapp-grpc = { git = "https://github.com/zorp-corp/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
 nockvm = { git = "https://github.com/sigilante/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
 nockvm_macros = { git = "https://github.com/sigilante/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
+zkvm-jetpack = { git = "https://github.com/zorp-corp/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
+kernels = { git = "https://github.com/zorp-corp/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
 
 # Common dependencies for NockApps
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
 anyhow = "1.0"
 bytes = "1.5.0"
+clap = "4.4.4"
 tokio = { version = "1.32", features = [
   "fs",
   "io-util",
@@ -28,8 +32,20 @@ tokio = { version = "1.32", features = [
   "rt-multi-thread",
   "rt",
   "signal",
+  "tracing"
 ] }
 tokio-util = "0.7.11"
+tracing = "0.1.41"
+tracing-core = "0.1"
+tracing-opentelemetry = { version = "0.31.0", features = ["metrics"] }
+tracing-subscriber = { version = "0.3.18", features = [
+    "ansi",
+    "env-filter",
+    "registry",
+] }
+tracing-test = "0.2.5"
+tracing-tracy = { version = "0.11.4" }
+tracy-client = { version = "0.18.2" }
 
 [build-dependencies]
 # Build script dependencies if needed

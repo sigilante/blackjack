@@ -13,8 +13,17 @@
 |%
 +$  server-state
   $:  %0
-      ::  Map of game-id to session state (multi-session architecture)
       sessions=(map game-id:blackjack session-state:blackjack)
+  ==
+::
+::  Server configuration (hardcoded for now)
+::
+++  server-config
+  ^-  server-config:blackjack
+  :*  wallet-pkh='9yPePjfWAdUnzaQKyxcRXKRa5PpUzKKEwtpECBZsUYt9Jd7egSDEWoV'
+      confirmation-blocks=3
+      enable-blockchain=%.n
+      initial-bank=1.000
   ==
 --
 ::  Application logic
@@ -24,16 +33,6 @@
 ::
 ++  inner
   |_  state=server-state
-  ::
-  ::  Server configuration (hardcoded for now)
-  ::
-  ++  server-config
-    ^-  server-config:blackjack
-    :*  wallet-pkh='9yPePjfWAdUnzaQKyxcRXKRa5PpUzKKEwtpECBZsUYt9Jd7egSDEWoV'
-        confirmation-blocks=3
-        enable-blockchain=%.n
-        initial-bank=1.000
-    ==
   ::
   ::  +load: upgrade from previous state
   ::
@@ -152,7 +151,7 @@
           [%blackjack %api %session %create ~]
         ~&  "Matched /blackjack/api/session/create route"
         ::  Generate UUID from entropy
-        =/  game-id=@t  (generate-uuid:blackjack entropy)
+        =/  =game-id:blackjack  (generate-uuid:blackjack entropy)
         ~&  "Generated game-id: {<game-id>}"
         ::  Create initial game state
         =/  config=server-config:blackjack  server-config
@@ -183,7 +182,8 @@
             (to-octs:http (crip json))
         ==
         ::  Deal initial hands
-          [%blackjack %api game-id %deal ~]
+          [%blackjack %api game-id:blackjack %deal ~]
+        =/  =game-id:blackjack  (snag 2 `path`uri)
         ~&  "Matched /blackjack/api/{<game-id>}/deal route"
         ::  Parse body to get bet amount
         ?~  body
@@ -240,7 +240,8 @@
             (to-octs:http (crip json))
         ==
         ::
-          [%blackjack %api game-id %hit ~]
+          [%blackjack %api game-id:blackjack %hit ~]
+        =/  =game-id:blackjack  (snag 2 `path`uri)
         ~&  "Matched /blackjack/api/{<game-id>}/hit route"
         ::  Get session state
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
@@ -278,7 +279,8 @@
             (to-octs:http (crip json))
         ==
         ::
-          [%blackjack %api game-id %stand ~]
+          [%blackjack %api game-id:blackjack %stand ~]
+        =/  =game-id:blackjack  (snag 2 `path`uri)
         ~&  "Matched /blackjack/api/{<game-id>}/stand route"
         ::  Get session state
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
@@ -326,7 +328,8 @@
             (to-octs:http (crip json))
         ==
         ::
-          [%blackjack %api game-id %double ~]
+          [%blackjack %api game-id:blackjack %double ~]
+        =/  =game-id:blackjack  (snag 2 `path`uri)
         ~&  "Matched /blackjack/api/{<game-id>}/double route"
         ::  Get session state
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
