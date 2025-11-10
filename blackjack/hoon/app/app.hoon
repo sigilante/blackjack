@@ -30,6 +30,7 @@
       confirmation-blocks=3
       enable-blockchain=%.n
       initial-bank=1.000
+      max-history-entries=20
   ==
 --
 ::  Application logic
@@ -251,7 +252,11 @@
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
           ~&  "Session not found: {<game-id>}"
-          [~[[%res ~ %404 ~ ~]] state]
+          =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
+          :_  state
+          :_  ~
+          ^-  effect:http
+          [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  json=tape
           (make-json-full-session:blackjack u.existing)
         :_  state
@@ -311,7 +316,10 @@
         ~&  "Matched /blackjack/api/{<game-id>}/deal route"
         ::  Parse body to get bet amount
         ?~  body
-          [~[[%res ~ %400 ~ ~]] state]
+          =/  error-json=tape  (make-json-error:blackjack 400 "Missing request body")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  body-text=tape  (trip q.u.body)
         =/  bet-parsed=(unit @ud)  (parse-json-number:blackjack "bet" body-text)
         =/  bet=@ud  ?~(bet-parsed 100 u.bet-parsed)
@@ -321,13 +329,19 @@
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
           ~&  "Session not found: {<game-id>}"
-          [~[[%res ~ %404 ~ ~]] state]
+          =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
+          :_  state
+          :_  ~
+          [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  current-session=session-state:blackjack  u.existing
         =/  current-game=game-state-inner:blackjack  game.current-session
         ::
         ::  Check if player can afford the bet
         ?:  (gth bet bank.current-game)
-          [~[[%res ~ %400 ~ ~]] state]
+          =/  error-json=tape  (make-json-error:blackjack 400 "Insufficient funds")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
         ::  Deduct bet from bank
         =/  new-bank=@ud  (sub bank.current-game bet)
@@ -371,7 +385,10 @@
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
           ~&  "Session not found: {<game-id>}"
-          [~[[%res ~ %404 ~ ~]] state]
+          =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
+          :_  state
+          :_  ~
+          [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  current-session=session-state:blackjack  u.existing
         =/  current-game=game-state-inner:blackjack  game.current-session
         ::
@@ -410,7 +427,10 @@
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
           ~&  "Session not found: {<game-id>}"
-          [~[[%res ~ %404 ~ ~]] state]
+          =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
+          :_  state
+          :_  ~
+          [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  current-session=session-state:blackjack  u.existing
         =/  current-game=game-state-inner:blackjack  game.current-session
         ::
@@ -432,9 +452,16 @@
         ~&  "New bank: {<new-bank>}"
         =/  dealer-score=@ud  (hand-value:blackjack final-dealer-hand)
         ::
+        ::  Calculate win/loss change (payout includes return of bet)
+        =/  profit=@sd
+          =/  raw-profit=@s  (dif:si --payout --current-bet.current-game)
+          ?:  (syn:si raw-profit)  raw-profit
+          (new:si %.n (abs:si raw-profit))
+        =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
+        ::
         ::  Update game
         =/  updated-game=game-state-inner:blackjack
-          current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), deck remaining-deck, bank new-bank, game-in-progress %.n)
+          current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), deck remaining-deck, bank new-bank, win-loss new-win-loss, game-in-progress %.n)
         ::
         ::  Create history entry
         =/  history-entry=hand-history:blackjack
@@ -445,9 +472,10 @@
               payout=payout
               timestamp=now.input.ovum
           ==
-        ::  Append to history (keep last 20 hands)
+        ::  Append to history (keep last N hands per config)
+        =/  config=server-config:blackjack  server-config
         =/  new-history=(list hand-history:blackjack)
-          (scag 20 `(list hand-history:blackjack)`[history-entry history.current-session])
+          (append-to-history:blackjack history-entry history.current-session max-history-entries.config)
         ::
         ::  Update session state (set status to ended and add history)
         =/  updated-session=session-state:blackjack
@@ -472,13 +500,19 @@
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
           ~&  "Session not found: {<game-id>}"
-          [~[[%res ~ %404 ~ ~]] state]
+          =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
+          :_  state
+          :_  ~
+          [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  current-session=session-state:blackjack  u.existing
         =/  current-game=game-state-inner:blackjack  game.current-session
         ::
         ::  Check if player can afford to double
         ?:  (gth current-bet.current-game bank.current-game)
-          [~[[%res ~ %400 ~ ~]] state]
+          =/  error-json=tape  (make-json-error:blackjack 400 "Insufficient funds to double down")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
         ::  Deduct additional bet from bank and double current-bet
         =/  new-bank=@ud  (sub bank.current-game current-bet.current-game)
@@ -493,8 +527,11 @@
         ?:  player-busted
           =/  dealer-hand-current=hand:blackjack  (snag 0 dealer-hand.current-game)
           =/  dealer-score=@ud  (hand-value:blackjack dealer-hand-current)
+          ::  Calculate win/loss (busted = loss of doubled bet)
+          =/  loss=@sd  (new:si %.n doubled-bet)
+          =/  new-win-loss=@sd  (sum:si win-loss.current-game loss)
           =/  final-game=game-state-inner:blackjack
-            current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet doubled-bet, bank new-bank, game-in-progress %.n)
+            current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet doubled-bet, bank new-bank, win-loss new-win-loss, game-in-progress %.n)
           ::  Create history entry (busted = loss)
           =/  history-entry=hand-history:blackjack
             :*  bet=doubled-bet
@@ -504,9 +541,10 @@
                 payout=0
                 timestamp=now.input.ovum
             ==
-          ::  Append to history (keep last 20 hands)
+          ::  Append to history (keep last N hands per config)
+          =/  config=server-config:blackjack  server-config
           =/  new-history=(list hand-history:blackjack)
-            (scag 20 `(list hand-history:blackjack)`[history-entry history.current-session])
+            (append-to-history:blackjack history-entry history.current-session max-history-entries.config)
           ::  Update session state (set status to ended and add history)
           =/  final-session=session-state:blackjack
             current-session(game final-game, last-activity now.input.ovum, status %ended, history new-history)
@@ -535,9 +573,16 @@
         =/  final-bank=@ud  (add new-bank payout)
         =/  dealer-score=@ud  (hand-value:blackjack final-dealer-hand)
         ::
+        ::  Calculate win/loss change (payout includes return of bet)
+        =/  profit=@sd
+          =/  raw-profit=@s  (dif:si --payout --doubled-bet)
+          ?:  (syn:si raw-profit)  raw-profit
+          (new:si %.n (abs:si raw-profit))
+        =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
+        ::
         ::  Update game
         =/  final-game=game-state-inner:blackjack
-          current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), player-hand (snap player-hand.current-game 0 new-player-hand), deck deck-for-dealer, current-bet doubled-bet, bank final-bank, game-in-progress %.n)
+          current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), player-hand (snap player-hand.current-game 0 new-player-hand), deck deck-for-dealer, current-bet doubled-bet, bank final-bank, win-loss new-win-loss, game-in-progress %.n)
         ::
         ::  Create history entry
         =/  history-entry=hand-history:blackjack
@@ -548,9 +593,10 @@
               payout=payout
               timestamp=now.input.ovum
           ==
-        ::  Append to history (keep last 20 hands)
+        ::  Append to history (keep last N hands per config)
+        =/  config=server-config:blackjack  server-config
         =/  new-history=(list hand-history:blackjack)
-          (scag 20 `(list hand-history:blackjack)`[history-entry history.current-session])
+          (append-to-history:blackjack history-entry history.current-session max-history-entries.config)
         ::
         ::  Update session state (set status to ended and add history)
         =/  final-session=session-state:blackjack

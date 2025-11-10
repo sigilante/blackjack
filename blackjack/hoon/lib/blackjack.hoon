@@ -75,9 +75,10 @@
 ::
 +$  server-config
   $:  wallet-pkh=@t                :: Server's PKH from config
-      confirmation-blocks=@ud      :: Required confirmations
+      confirmation-blocks=@ud      :: Required confirmations (typically 3)
       enable-blockchain=?          :: Toggle blockchain integration
-      initial-bank=@ud             :: Initial bank for new sessions
+      initial-bank=@ud             :: Initial bank for new sessions (default 1000)
+      max-history-entries=@ud      :: Maximum history entries to keep (default 20)
   ==
 --
 ::  Game mechanics
@@ -393,6 +394,21 @@
   %+  weld  ",\"bank\":"
   %+  weld  (a-co:co bank)
   "}"
+::
+++  make-json-error
+  |=  [code=@ud message=tape]
+  ^-  tape
+  %+  weld  "\{\"error\":\""
+  %+  weld  message
+  "\",\"code\":"
+  %+  weld  (a-co:co code)
+  "}"
+::
+++  append-to-history
+  |=  [new-entry=hand-history old-history=(list hand-history) max-entries=@ud]
+  ^-  (list hand-history)
+  ::  Prepend new entry and keep last N entries
+  (scag max-entries `(list hand-history)`[new-entry old-history])
 ::
 ++  hand-history-to-json
   |=  hist=hand-history
