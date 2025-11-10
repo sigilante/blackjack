@@ -423,10 +423,10 @@
         =/  new-score=@ud  (hand-value:blackjack new-player-hand)
         =/  busted=?  (is-busted:blackjack new-player-hand)
         ::
-        ::  Update game (end game if busted)
+        ::  Update game (end game if busted, clear bet)
         =/  updated-game=game-state-inner:blackjack
           ?:  busted
-            current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), game-in-progress %.n)
+            current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet 0, game-in-progress %.n)
           current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand))
         ::
         ::  Update session state
@@ -494,9 +494,9 @@
           (new:si %.n (abs:si raw-profit))
         =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
         ::
-        ::  Update game
+        ::  Update game (clear bet when ending)
         =/  updated-game=game-state-inner:blackjack
-          current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), deck remaining-deck, bank new-bank, win-loss new-win-loss, game-in-progress %.n)
+          current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), deck remaining-deck, bank new-bank, win-loss new-win-loss, current-bet 0, game-in-progress %.n)
         ::
         ::  Create history entry
         =/  history-entry=hand-history:blackjack
@@ -577,7 +577,7 @@
           =/  loss=@sd  (new:si %.n doubled-bet)
           =/  new-win-loss=@sd  (sum:si win-loss.current-game loss)
           =/  final-game=game-state-inner:blackjack
-            current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet doubled-bet, bank new-bank, win-loss new-win-loss, game-in-progress %.n)
+            current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet 0, bank new-bank, win-loss new-win-loss, game-in-progress %.n)
           ::  Create history entry (busted = loss)
           =/  history-entry=hand-history:blackjack
             :*  bet=doubled-bet
@@ -628,9 +628,9 @@
           (new:si %.n (abs:si raw-profit))
         =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
         ::
-        ::  Update game
+        ::  Update game (clear bet when ending)
         =/  final-game=game-state-inner:blackjack
-          current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), player-hand (snap player-hand.current-game 0 new-player-hand), deck deck-for-dealer, current-bet doubled-bet, bank final-bank, win-loss new-win-loss, game-in-progress %.n)
+          current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), player-hand (snap player-hand.current-game 0 new-player-hand), deck deck-for-dealer, current-bet 0, bank final-bank, win-loss new-win-loss, game-in-progress %.n)
         ::
         ::  Create history entry
         =/  history-entry=hand-history:blackjack
