@@ -139,6 +139,44 @@
             ==
             (to-octs:http q.sprites)
         ==
+        ::
+          :: GET /api/sessions - List all active sessions
+          [%blackjack %api %sessions ~]
+        ~&  "Matched route: GET /blackjack/api/sessions"
+        ::  Extract session info from all sessions
+        =/  session-list=(list [game-id=@t status=session-status:blackjack bank=@ud hands-played=@ud])
+          %+  turn  ~(tap by sessions.state)
+          |=  [gid=@t sess=session-state:blackjack]
+          ^-  [game-id=@t status=session-status:blackjack bank=@ud hands-played=@ud]
+          [gid status.sess bank.game.sess hands-played.game.sess]
+        =/  json=tape
+          (make-json-sessions-list:blackjack session-list)
+        :_  state
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'application/json']
+            ==
+            (to-octs:http (crip json))
+        ==
+        ::
+          :: GET /api/{game-id}/status - Get full session state
+          [%blackjack %api game-id %status ~]
+        ~&  "Matched route: GET /blackjack/api/{<game-id>}/status"
+        =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
+        ?~  existing
+          ~&  "Session not found: {<game-id>}"
+          [~[[%res ~ %404 ~ ~]] state]
+        =/  json=tape
+          (make-json-full-session:blackjack u.existing)
+        :_  state
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'application/json']
+            ==
+            (to-octs:http (crip json))
+        ==
       ==  :: end GET
       ::
         %'POST'
@@ -168,6 +206,7 @@
               created=now.input.ovum
               last-activity=now.input.ovum
               status=%awaiting-bet
+              history=~
           ==
         ::  Return session info with server PKH
         =/  json=tape
@@ -312,9 +351,22 @@
         =/  updated-game=game-state-inner:blackjack
           current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), deck remaining-deck, bank new-bank, game-in-progress %.n)
         ::
-        ::  Update session state (set status to ended)
+        ::  Create history entry
+        =/  history-entry=hand-history:blackjack
+          :*  bet=current-bet.current-game
+              player-hand=(snag 0 player-hand.current-game)
+              dealer-hand=final-dealer-hand
+              outcome=outcome
+              payout=payout
+              timestamp=now.input.ovum
+          ==
+        ::  Append to history (keep last 20 hands)
+        =/  new-history=(list hand-history:blackjack)
+          (scag 20 [history-entry history.current-session])
+        ::
+        ::  Update session state (set status to ended and add history)
         =/  updated-session=session-state:blackjack
-          current-session(game updated-game, last-activity now.input.ovum, status %ended)
+          current-session(game updated-game, last-activity now.input.ovum, status %ended, history new-history)
         ::
         =/  json=tape
           (make-json-stand:blackjack final-dealer-hand dealer-score outcome payout new-bank)
@@ -358,9 +410,21 @@
           =/  dealer-score=@ud  (hand-value:blackjack dealer-hand-current)
           =/  final-game=game-state-inner:blackjack
             current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet doubled-bet, bank new-bank, game-in-progress %.n)
-          ::  Update session state (set status to ended)
+          ::  Create history entry (busted = loss)
+          =/  history-entry=hand-history:blackjack
+            :*  bet=doubled-bet
+                player-hand=new-player-hand
+                dealer-hand=dealer-hand-current
+                outcome=%loss
+                payout=0
+                timestamp=now.input.ovum
+            ==
+          ::  Append to history (keep last 20 hands)
+          =/  new-history=(list hand-history:blackjack)
+            (scag 20 [history-entry history.current-session])
+          ::  Update session state (set status to ended and add history)
           =/  final-session=session-state:blackjack
-            current-session(game final-game, last-activity now.input.ovum, status %ended)
+            current-session(game final-game, last-activity now.input.ovum, status %ended, history new-history)
           =/  json=tape
             (make-json-double:blackjack new-player-hand dealer-hand-current dealer-score %loss 0 new-bank)
           :_  state(sessions (~(put by sessions.state) game-id final-session))
@@ -390,9 +454,22 @@
         =/  final-game=game-state-inner:blackjack
           current-game(dealer-hand (snap dealer-hand.current-game 0 final-dealer-hand), player-hand (snap player-hand.current-game 0 new-player-hand), deck deck-for-dealer, current-bet doubled-bet, bank final-bank, game-in-progress %.n)
         ::
-        ::  Update session state (set status to ended)
+        ::  Create history entry
+        =/  history-entry=hand-history:blackjack
+          :*  bet=doubled-bet
+              player-hand=new-player-hand
+              dealer-hand=final-dealer-hand
+              outcome=outcome
+              payout=payout
+              timestamp=now.input.ovum
+          ==
+        ::  Append to history (keep last 20 hands)
+        =/  new-history=(list hand-history:blackjack)
+          (scag 20 [history-entry history.current-session])
+        ::
+        ::  Update session state (set status to ended and add history)
         =/  final-session=session-state:blackjack
-          current-session(game final-game, last-activity now.input.ovum, status %ended)
+          current-session(game final-game, last-activity now.input.ovum, status %ended, history new-history)
         ::
         =/  json=tape
           (make-json-double:blackjack new-player-hand final-dealer-hand dealer-score outcome payout final-bank)

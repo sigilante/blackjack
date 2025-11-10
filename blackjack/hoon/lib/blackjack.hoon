@@ -36,6 +36,15 @@
       %closed          :: Session closed
   ==
 ::
++$  hand-history
+  $:  bet=@ud
+      player-hand=hand
+      dealer-hand=hand
+      outcome=?(%win %loss %push %blackjack)
+      payout=@ud
+      timestamp=@da
+  ==
+::
 +$  session-state
   $:  game-id=@t
       player-pkh=(unit @t)        :: Player's public key hash
@@ -46,6 +55,7 @@
       created=@da
       last-activity=@da
       status=session-status
+      history=(list hand-history) :: Last N hands played
   ==
 ::
 +$  game-state-inner
@@ -382,5 +392,90 @@
   %+  weld  ?~(player-pkh "null" (weld "\"" (weld (trip u.player-pkh) "\"")))
   %+  weld  ",\"bank\":"
   %+  weld  (a-co:co bank)
+  "}"
+::
+++  hand-history-to-json
+  |=  hist=hand-history
+  ^-  tape
+  %+  weld  "\{\"bet\":"
+  %+  weld  (a-co:co bet.hist)
+  %+  weld  ",\"playerHand\":"
+  %+  weld  (hand-to-json player-hand.hist)
+  %+  weld  ",\"dealerHand\":"
+  %+  weld  (hand-to-json dealer-hand.hist)
+  %+  weld  ",\"outcome\":\""
+  %+  weld  (scow %tas outcome.hist)
+  %+  weld  "\",\"payout\":"
+  %+  weld  (a-co:co payout.hist)
+  "}"
+::
+++  history-list-to-json
+  |=  history=(list hand-history)
+  ^-  tape
+  ?~  history
+    "[]"
+  =/  json-items=(list tape)
+    %+  turn  history
+    |=(hist=hand-history (hand-history-to-json hist))
+  %+  weld  "["
+  %+  weld  (join-tapes json-items ",")
+  "]"
+::
+++  join-tapes
+  |=  [items=(list tape) separator=tape]
+  ^-  tape
+  ?~  items  ""
+  ?~  t.items  i.items
+  %+  weld  i.items
+  %+  weld  separator
+  $(items t.items)
+::
+++  make-json-sessions-list
+  |=  sessions=(list [game-id=@t status=session-status bank=@ud hands-played=@ud])
+  ^-  tape
+  ?~  sessions
+    "\{\"sessions\":[]}"
+  =/  session-jsons=(list tape)
+    %+  turn  sessions
+    |=  [game-id=@t status=session-status bank=@ud hands-played=@ud]
+    ^-  tape
+    %+  weld  "\{\"gameId\":\""
+    %+  weld  (trip game-id)
+    %+  weld  "\",\"status\":\""
+    %+  weld  (scow %tas status)
+    %+  weld  "\",\"bank\":"
+    %+  weld  (a-co:co bank)
+    %+  weld  ",\"handsPlayed\":"
+    %+  weld  (a-co:co hands-played)
+    "}"
+  %+  weld  "\{\"sessions\":["
+  %+  weld  (join-tapes session-jsons ",")
+  "]}"
+::
+++  make-json-full-session
+  |=  sess=session-state
+  ^-  tape
+  %+  weld  "\{\"gameId\":\""
+  %+  weld  (trip game-id.sess)
+  %+  weld  "\",\"status\":\""
+  %+  weld  (scow %tas status.sess)
+  %+  weld  "\",\"playerPkh\":"
+  %+  weld  ?~(player-pkh.sess "null" (weld "\"" (weld (trip u.player-pkh.sess) "\"")))
+  %+  weld  ",\"bank\":"
+  %+  weld  (a-co:co bank.game.sess)
+  %+  weld  ",\"currentBet\":"
+  %+  weld  (a-co:co current-bet.game.sess)
+  %+  weld  ",\"handsPlayed\":"
+  %+  weld  (a-co:co hands-played.game.sess)
+  %+  weld  ",\"gameInProgress\":"
+  %+  weld  ?:(game-in-progress.game.sess "true" "false")
+  %+  weld  ",\"playerHand\":"
+  %+  weld  ?~(player-hand.game.sess "[]" (hand-to-json (snag 0 player-hand.game.sess)))
+  %+  weld  ",\"dealerHand\":"
+  %+  weld  ?~(dealer-hand.game.sess "[]" (hand-to-json (snag 0 dealer-hand.game.sess)))
+  %+  weld  ",\"dealerTurn\":"
+  %+  weld  ?:(dealer-turn.game.sess "true" "false")
+  %+  weld  ",\"history\":"
+  %+  weld  (history-list-to-json history.sess)
   "}"
 --
