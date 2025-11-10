@@ -65,7 +65,7 @@
       bank=@ud
       current-bet=@ud
       win-loss=@sd
-      hands-played=@ud         :: Track number of hands
+      deals-made=@ud           :: Track number of deals
       game-in-progress=?
       dealer-turn=?
   ==
@@ -368,7 +368,7 @@
       bank=initial-bank
       current-bet=0
       win-loss=--0
-      hands-played=0
+      deals-made=0
       game-in-progress=%.n
       dealer-turn=%.n
   ==
@@ -410,6 +410,35 @@
   ::  Prepend new entry and keep last N entries
   (scag max-entries `(list hand-history)`[new-entry old-history])
 ::
+++  validate-game-action
+  |=  [action=?(%hit %stand %double %deal) sess=session-state]
+  ^-  (unit tape)
+  ::  Returns error message if invalid, ~ if valid
+  =/  game=game-state-inner  game.sess
+  ?-  action
+    %deal
+      ?:  game-in-progress.game
+        `"Cannot deal while game is in progress"
+      ::  For now, allow dealing without blockchain confirmation
+      ::  This will be enforced when enable-blockchain=%.y
+      ~
+    %hit
+      ?:  |(=(%.n game-in-progress.game) dealer-turn.game)
+        `"Cannot hit - not player's turn"
+      ~
+    %stand
+      ?:  |(=(%.n game-in-progress.game) dealer-turn.game)
+        `"Cannot stand - not player's turn"
+      ~
+    %double
+      ?:  |(=(%.n game-in-progress.game) dealer-turn.game)
+        `"Cannot double - not player's turn"
+      ::  Check if player has exactly 2 cards (first turn only)
+      ?:  !=(2 (lent (snag 0 player-hand.game)))
+        `"Can only double on first two cards"
+      ~
+  ==
+::
 ++  hand-history-to-json
   |=  hist=hand-history
   ^-  tape
@@ -447,13 +476,13 @@
   $(items t.items)
 ::
 ++  make-json-sessions-list
-  |=  sessions=(list [game-id=@t status=session-status bank=@ud hands-played=@ud])
+  |=  sessions=(list [game-id=@t status=session-status bank=@ud deals-made=@ud])
   ^-  tape
   ?~  sessions
     "\{\"sessions\":[]}"
   =/  session-jsons=(list tape)
     %+  turn  sessions
-    |=  [game-id=@t status=session-status bank=@ud hands-played=@ud]
+    |=  [game-id=@t status=session-status bank=@ud deals-made=@ud]
     ^-  tape
     %+  weld  "\{\"gameId\":\""
     %+  weld  (trip game-id)
@@ -461,8 +490,8 @@
     %+  weld  (scow %tas status)
     %+  weld  "\",\"bank\":"
     %+  weld  (a-co:co bank)
-    %+  weld  ",\"handsPlayed\":"
-    %+  weld  (a-co:co hands-played)
+    %+  weld  ",\"dealsMade\":"
+    %+  weld  (a-co:co deals-made)
     "}"
   %+  weld  "\{\"sessions\":["
   %+  weld  (join-tapes session-jsons ",")
@@ -481,8 +510,8 @@
   %+  weld  (a-co:co bank.game.sess)
   %+  weld  ",\"currentBet\":"
   %+  weld  (a-co:co current-bet.game.sess)
-  %+  weld  ",\"handsPlayed\":"
-  %+  weld  (a-co:co hands-played.game.sess)
+  %+  weld  ",\"dealsMade\":"
+  %+  weld  (a-co:co deals-made.game.sess)
   %+  weld  ",\"gameInProgress\":"
   %+  weld  ?:(game-in-progress.game.sess "true" "false")
   %+  weld  ",\"playerHand\":"

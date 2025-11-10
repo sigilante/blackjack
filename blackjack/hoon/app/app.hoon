@@ -229,11 +229,11 @@
           [%blackjack %api %sessions ~]
         ~&  "Matched route: GET /blackjack/api/sessions"
         ::  Extract session info from all sessions
-        =/  session-list=(list [game-id=@t status=session-status:blackjack bank=@ud hands-played=@ud])
+        =/  session-list=(list [game-id=@t status=session-status:blackjack bank=@ud deals-made=@ud])
           %+  turn  ~(tap by sessions.state)
           |=  [gid=@t sess=session-state:blackjack]
-          ^-  [game-id=@t status=session-status:blackjack bank=@ud hands-played=@ud]
-          [gid status.sess bank.game.sess hands-played.game.sess]
+          ^-  [game-id=@t status=session-status:blackjack bank=@ud deals-made=@ud]
+          [gid status.sess bank.game.sess deals-made.game.sess]
         =/  json=tape
           (make-json-sessions-list:blackjack session-list)
         :_  state
@@ -336,6 +336,15 @@
         =/  current-session=session-state:blackjack  u.existing
         =/  current-game=game-state-inner:blackjack  game.current-session
         ::
+        ::  Validate game action
+        =/  validation-error=(unit tape)
+          (validate-game-action:blackjack %deal current-session)
+        ?^  validation-error
+          =/  error-json=tape  (make-json-error:blackjack 400 u.validation-error)
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::
         ::  Check if player can afford the bet
         ?:  (gth bet bank.current-game)
           =/  error-json=tape  (make-json-error:blackjack 400 "Insufficient funds")
@@ -358,7 +367,7 @@
         ::
         ::  Update game state with bet deducted
         =/  updated-game=game-state-inner:blackjack
-          current-game(deck remaining-deck, player-hand player-hand, dealer-hand dealer-hand, current-bet bet, bank new-bank, game-in-progress %.y, dealer-turn %.n, hands-played +(hands-played.current-game))
+          current-game(deck remaining-deck, player-hand player-hand, dealer-hand dealer-hand, current-bet bet, bank new-bank, game-in-progress %.y, dealer-turn %.n, deals-made +(deals-made.current-game))
         ::
         ::  Update session state (set status to active)
         =/  updated-session=session-state:blackjack
@@ -391,6 +400,15 @@
           [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  current-session=session-state:blackjack  u.existing
         =/  current-game=game-state-inner:blackjack  game.current-session
+        ::
+        ::  Validate game action
+        =/  validation-error=(unit tape)
+          (validate-game-action:blackjack %hit current-session)
+        ?^  validation-error
+          =/  error-json=tape  (make-json-error:blackjack 400 u.validation-error)
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
         ::  Draw card
         =+  [new-card remaining-deck]=(draw-card:blackjack deck.current-game)
@@ -433,6 +451,15 @@
           [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  current-session=session-state:blackjack  u.existing
         =/  current-game=game-state-inner:blackjack  game.current-session
+        ::
+        ::  Validate game action
+        =/  validation-error=(unit tape)
+          (validate-game-action:blackjack %stand current-session)
+        ?^  validation-error
+          =/  error-json=tape  (make-json-error:blackjack 400 u.validation-error)
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
         ::  Dealer plays
         =/  final-dealer-hand=hand:blackjack  (snag 0 dealer-hand.current-game)
@@ -506,6 +533,15 @@
           [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  current-session=session-state:blackjack  u.existing
         =/  current-game=game-state-inner:blackjack  game.current-session
+        ::
+        ::  Validate game action
+        =/  validation-error=(unit tape)
+          (validate-game-action:blackjack %double current-session)
+        ?^  validation-error
+          =/  error-json=tape  (make-json-error:blackjack 400 u.validation-error)
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
         ::  Check if player can afford to double
         ?:  (gth current-bet.current-game bank.current-game)
