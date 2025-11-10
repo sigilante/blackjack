@@ -19,6 +19,16 @@ async function init() {
     // Auto-refresh sessions list every 10 seconds to catch new sessions
     sessionsListRefreshInterval = setInterval(refreshSessions, 10000);
 
+    // Set up refresh button listener (in addition to onclick)
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Refresh button clicked via event listener');
+            refreshSessions();
+        });
+    }
+
     // Set up session selector listener
     document.getElementById('session-selector').addEventListener('change', async (e) => {
         const gameId = e.target.value;
@@ -35,6 +45,9 @@ async function init() {
         }
     });
 }
+
+// Make refreshSessions globally accessible for onclick handler
+window.refreshSessions = refreshSessions;
 
 // Refresh the sessions list
 async function refreshSessions() {

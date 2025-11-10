@@ -16,7 +16,19 @@ async function init() {
         availableBalance = data.availableBalance || 1000;
         bettingPool = data.bettingPool || 0;
         transactionHistory = data.transactionHistory || [];
+
+        // Restore PKH and private key if saved
+        if (data.playerPkh) {
+            document.getElementById('player-pkh-input').value = data.playerPkh;
+        }
+        if (data.playerPrivateKey) {
+            document.getElementById('player-private-key').value = data.playerPrivateKey;
+        }
     }
+
+    // Set up auto-save for PKH and private key fields
+    document.getElementById('player-pkh-input').addEventListener('change', saveWalletData);
+    document.getElementById('player-private-key').addEventListener('change', saveWalletData);
 
     updateDisplay();
     updateTransactionList();
@@ -202,9 +214,16 @@ function saveState() {
     const data = {
         availableBalance,
         bettingPool,
-        transactionHistory
+        transactionHistory,
+        playerPkh: document.getElementById('player-pkh-input').value,
+        playerPrivateKey: document.getElementById('player-private-key').value
     };
     localStorage.setItem('blackjack-wallet', JSON.stringify(data));
+}
+
+// Alias for backwards compatibility
+function saveWalletData() {
+    saveState();
 }
 
 // Set status message
