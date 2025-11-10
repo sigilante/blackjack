@@ -470,9 +470,9 @@
   %+  weld  ",\"gameInProgress\":"
   %+  weld  ?:(game-in-progress.game.sess "true" "false")
   %+  weld  ",\"playerHand\":"
-  %+  weld  ?~(player-hand.game.sess "[]" (hand-to-json (snag 0 player-hand.game.sess)))
+  %+  weld  ?:(=(~ player-hand.game.sess) "[]" (hand-to-json (snag 0 player-hand.game.sess)))
   %+  weld  ",\"dealerHand\":"
-  %+  weld  ?~(dealer-hand.game.sess "[]" (hand-to-json (snag 0 dealer-hand.game.sess)))
+  %+  weld  ?:(=(~ dealer-hand.game.sess) "[]" (hand-to-json (snag 0 dealer-hand.game.sess)))
   %+  weld  ",\"dealerTurn\":"
   %+  weld  ?:(dealer-turn.game.sess "true" "false")
   %+  weld  ",\"history\":"

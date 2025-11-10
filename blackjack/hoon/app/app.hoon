@@ -245,7 +245,8 @@
         ==
         ::
           :: GET /api/{game-id}/status - Get full session state
-          [%blackjack %api game-id %status ~]
+          [%blackjack %api game-id:blackjack %status ~]
+        =/  =game-id:blackjack  (snag 2 `path`uri)
         ~&  "Matched route: GET /blackjack/api/{<game-id>}/status"
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
@@ -446,7 +447,7 @@
           ==
         ::  Append to history (keep last 20 hands)
         =/  new-history=(list hand-history:blackjack)
-          (scag 20 [history-entry history.current-session])
+          (scag 20 `(list hand-history:blackjack)`[history-entry history.current-session])
         ::
         ::  Update session state (set status to ended and add history)
         =/  updated-session=session-state:blackjack
@@ -505,7 +506,7 @@
             ==
           ::  Append to history (keep last 20 hands)
           =/  new-history=(list hand-history:blackjack)
-            (scag 20 [history-entry history.current-session])
+            (scag 20 `(list hand-history:blackjack)`[history-entry history.current-session])
           ::  Update session state (set status to ended and add history)
           =/  final-session=session-state:blackjack
             current-session(game final-game, last-activity now.input.ovum, status %ended, history new-history)
@@ -549,7 +550,7 @@
           ==
         ::  Append to history (keep last 20 hands)
         =/  new-history=(list hand-history:blackjack)
-          (scag 20 [history-entry history.current-session])
+          (scag 20 `(list hand-history:blackjack)`[history-entry history.current-session])
         ::
         ::  Update session state (set status to ended and add history)
         =/  final-session=session-state:blackjack
