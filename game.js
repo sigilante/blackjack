@@ -568,7 +568,18 @@ async function hit() {
         });
 
         if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
+            // Try to get error details from response
+            let errorMessage = `Server error: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                console.error('Hit endpoint error response:', errorData);
+                if (errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            } catch (e) {
+                console.error('Could not parse error response');
+            }
+            throw new Error(errorMessage);
         }
 
         const data = await response.json();
