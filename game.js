@@ -45,10 +45,13 @@ async function initGame() {
 
     if (savedGameId) {
         try {
+            console.log('Attempting to restore session:', savedGameId);
             // Try to restore the session
             const response = await fetch(`/blackjack/api/${savedGameId}/status`);
+            console.log('Restore response status:', response.status);
             if (response.ok) {
                 const session = await response.json();
+                console.log('Session data:', session);
                 // Restore session
                 gameId = savedGameId;
                 gameState.bank = session.bank;
@@ -58,13 +61,27 @@ async function initGame() {
                 gameState.dealerHand = session.dealerHand || [];
                 gameState.dealerTurn = session.dealerTurn;
 
+                console.log('Restored gameState:', {
+                    bank: gameState.bank,
+                    currentBet: gameState.currentBet,
+                    gameInProgress: gameState.gameInProgress,
+                    dealerTurn: gameState.dealerTurn,
+                    playerHandLength: gameState.playerHand.length,
+                    dealerHandLength: gameState.dealerHand.length
+                });
+
                 // Update button states based on game state
+                console.log('Setting button states...');
                 if (gameState.gameInProgress) {
+                    console.log('Game in progress - enabling Hit/Stand, disabling Deal');
                     document.getElementById('hit-btn').disabled = false;
                     document.getElementById('stand-btn').disabled = false;
                     document.getElementById('deal-btn').disabled = true;
                 } else if (gameState.currentBet > 0) {
+                    console.log('Bet placed but no game - enabling Deal');
                     document.getElementById('deal-btn').disabled = false;
+                } else {
+                    console.log('No bet, no game - all buttons should be disabled or in default state');
                 }
 
                 updateDisplay();
