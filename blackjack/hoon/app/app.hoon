@@ -228,14 +228,17 @@
           :: GET /api/sessions - List all active sessions
           [%blackjack %api %sessions ~]
         ~&  >>  "Matched route: GET /blackjack/api/sessions"
+        ~&  >>>  "Total sessions in state: {<~(wyt by sessions.state)>}"
         ::  Extract session info from all sessions
         =/  session-list=(list [game-id=@t status=session-status:blackjack bank=@ud deals-made=@ud])
           %+  turn  ~(tap by sessions.state)
           |=  [gid=@t sess=session-state:blackjack]
           ^-  [game-id=@t status=session-status:blackjack bank=@ud deals-made=@ud]
           [gid status.sess bank.game.sess deals-made.game.sess]
+        ~&  >>>  "Session list length: {<(lent session-list)>}"
         =/  json=tape
           (make-json-sessions-list:blackjack session-list)
+        ~&  >>>  "JSON response: {<json>}"
         :_  state
         :_  ~
         ^-  effect:http

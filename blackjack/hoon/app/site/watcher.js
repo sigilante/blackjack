@@ -38,13 +38,17 @@ async function init() {
 
 // Refresh the sessions list
 async function refreshSessions() {
+    console.log('refreshSessions() called');
     try {
+        console.log('Fetching /blackjack/api/sessions...');
         const response = await fetch('/blackjack/api/sessions');
+        console.log('Response status:', response.status);
         if (!response.ok) {
             throw new Error(`Server error: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log('Received data:', data);
         const selector = document.getElementById('session-selector');
 
         // Save current selection
@@ -54,6 +58,7 @@ async function refreshSessions() {
         selector.innerHTML = '<option value="">-- Select a session --</option>';
 
         data.sessions.forEach(session => {
+            console.log('Adding session:', session);
             const option = document.createElement('option');
             option.value = session.gameId;
             option.textContent = `${session.gameId.substring(0, 8)}... (${session.status}, $${session.bank}, ${session.dealsMade} deals)`;
