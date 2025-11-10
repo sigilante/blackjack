@@ -58,7 +58,11 @@ async function refreshSessions() {
             selector.value = currentSelection;
         }
 
-        setStatus(`Found ${data.sessions.length} session(s)`);
+        if (data.sessions.length === 0) {
+            setStatus('No active sessions found. Start a game in the Game tab to create a session.');
+        } else {
+            setStatus(`Found ${data.sessions.length} session(s)`);
+        }
     } catch (error) {
         console.error('Error fetching sessions:', error);
         setStatus('Error fetching sessions: ' + error.message);

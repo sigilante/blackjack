@@ -34,8 +34,56 @@ const rankValues = {
 };
 
 // Initialize the game
-function initGame() {
+async function initGame() {
+    // Try to restore previous session from localStorage
+    const savedGameId = localStorage.getItem('blackjack-gameId');
+    const savedServerPkh = localStorage.getItem('blackjack-serverPkh');
+
+    if (savedServerPkh) {
+        serverWalletPkh = savedServerPkh;
+    }
+
+    if (savedGameId) {
+        try {
+            // Try to restore the session
+            const response = await fetch(`/blackjack/api/${savedGameId}/status`);
+            if (response.ok) {
+                const session = await response.json();
+                // Restore session
+                gameId = savedGameId;
+                gameState.bank = session.bank;
+                gameState.currentBet = session.currentBet;
+                gameState.gameInProgress = session.gameInProgress;
+                gameState.playerHand = session.playerHand || [];
+                gameState.dealerHand = session.dealerHand || [];
+                gameState.dealerTurn = session.dealerTurn;
+
+                // Update button states based on game state
+                if (gameState.gameInProgress) {
+                    document.getElementById('hit-btn').disabled = false;
+                    document.getElementById('stand-btn').disabled = false;
+                    document.getElementById('deal-btn').disabled = true;
+                } else if (gameState.currentBet > 0) {
+                    document.getElementById('deal-btn').disabled = false;
+                }
+
+                updateDisplay();
+                updateSessionInfo();
+                setStatus(`Resumed session ${gameId.substring(0, 8)}... (Bank: $${gameState.bank})`);
+                return;
+            } else {
+                // Session no longer exists, clear it
+                localStorage.removeItem('blackjack-gameId');
+            }
+        } catch (error) {
+            console.error('Error restoring session:', error);
+            localStorage.removeItem('blackjack-gameId');
+        }
+    }
+
+    // No saved session or restore failed
     updateDisplay();
+    setStatus('Welcome! Click "New Game" or place a bet to start playing.');
 }
 
 // Create and shuffle a deck
@@ -356,6 +404,11 @@ async function startNewGame() {
         // Update session and game state from server
         gameId = data.gameId;
         serverWalletPkh = data.serverWalletPkh;
+
+        // Save to localStorage for persistence
+        localStorage.setItem('blackjack-gameId', gameId);
+        localStorage.setItem('blackjack-serverPkh', serverWalletPkh);
+
         gameState.bank = 1000;  // Initial bank from config
         gameState.currentBet = 0;
         gameState.winLoss = 0;
@@ -373,6 +426,7 @@ async function startNewGame() {
         document.getElementById('surrender-btn').disabled = true;
 
         updateDisplay();
+        updateSessionInfo();
         setStatus(`New session created (${gameId.substring(0, 8)}...). Place your bet and click Deal.`);
     } catch (error) {
         console.error('Error starting new game:', error);
@@ -800,6 +854,16 @@ function endRound(message) {
 // Set status message
 function setStatus(message) {
     document.getElementById('status-message').textContent = message;
+}
+
+// Update session info display
+function updateSessionInfo() {
+    const sessionInfoEl = document.getElementById('session-info');
+    if (gameId) {
+        sessionInfoEl.textContent = `Session: ${gameId.substring(0, 12)}...`;
+    } else {
+        sessionInfoEl.textContent = '';
+    }
 }
 
 // Initialize on page load
