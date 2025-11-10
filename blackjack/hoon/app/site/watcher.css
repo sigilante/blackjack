@@ -1,0 +1,189 @@
+/* Watcher-specific styles */
+
+.toolbar-label {
+    margin-right: 8px;
+    font-weight: bold;
+}
+
+.session-selector {
+    padding: 4px 8px;
+    font-family: 'MS Sans Serif', 'Microsoft Sans Serif', sans-serif;
+    font-size: 11px;
+    border: 2px inset #ddd;
+    background: white;
+    margin-right: 8px;
+    min-width: 300px;
+}
+
+/* Smaller cards for read-only view */
+.card-small {
+    transform: scale(0.9);
+}
+
+/* History Section */
+.history-section {
+    margin: 16px;
+    padding: 12px;
+    background: #c0c0c0;
+    border: 2px inset #ddd;
+}
+
+.history-header {
+    font-weight: bold;
+    margin-bottom: 8px;
+    padding: 4px;
+    background: #000080;
+    color: white;
+}
+
+.history-container {
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 2px inset #ddd;
+    padding: 8px;
+}
+
+.history-empty {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+    font-style: italic;
+}
+
+.history-entry {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: #f0f0f0;
+    border: 1px solid #999;
+}
+
+.history-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.history-hand-number {
+    color: #000080;
+}
+
+.history-outcome {
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: white;
+}
+
+.history-outcome-win {
+    background: #008000;
+}
+
+.history-outcome-loss {
+    background: #800000;
+}
+
+.history-outcome-push {
+    background: #808080;
+}
+
+.history-outcome-blackjack {
+    background: #000080;
+}
+
+.history-bet, .history-payout {
+    font-size: 10px;
+}
+
+.history-hands {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.history-hand {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.history-hand-label {
+    font-weight: bold;
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+.history-score {
+    margin-left: 4px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+/* Tiny cards for history */
+.card-tiny {
+    width: 20px;
+    height: 30px;
+    display: inline-block;
+    background-image: url('/blackjack/img/sprites.png');
+    background-size: 1040px 560px;
+    border: 1px solid #333;
+}
+
+/* Tiny card positions (same as regular but smaller) */
+.card-tiny.hearts-A { background-position: 0px 0px; }
+.card-tiny.hearts-2 { background-position: -20px 0px; }
+.card-tiny.hearts-3 { background-position: -40px 0px; }
+.card-tiny.hearts-4 { background-position: -60px 0px; }
+.card-tiny.hearts-5 { background-position: -80px 0px; }
+.card-tiny.hearts-6 { background-position: -100px 0px; }
+.card-tiny.hearts-7 { background-position: -120px 0px; }
+.card-tiny.hearts-8 { background-position: -140px 0px; }
+.card-tiny.hearts-9 { background-position: -160px 0px; }
+.card-tiny.hearts-10 { background-position: -180px 0px; }
+.card-tiny.hearts-J { background-position: -200px 0px; }
+.card-tiny.hearts-Q { background-position: -220px 0px; }
+.card-tiny.hearts-K { background-position: -240px 0px; }
+
+.card-tiny.diamonds-A { background-position: 0px -30px; }
+.card-tiny.diamonds-2 { background-position: -20px -30px; }
+.card-tiny.diamonds-3 { background-position: -40px -30px; }
+.card-tiny.diamonds-4 { background-position: -60px -30px; }
+.card-tiny.diamonds-5 { background-position: -80px -30px; }
+.card-tiny.diamonds-6 { background-position: -100px -30px; }
+.card-tiny.diamonds-7 { background-position: -120px -30px; }
+.card-tiny.diamonds-8 { background-position: -140px -30px; }
+.card-tiny.diamonds-9 { background-position: -160px -30px; }
+.card-tiny.diamonds-10 { background-position: -180px -30px; }
+.card-tiny.diamonds-J { background-position: -200px -30px; }
+.card-tiny.diamonds-Q { background-position: -220px -30px; }
+.card-tiny.diamonds-K { background-position: -240px -30px; }
+
+.card-tiny.clubs-A { background-position: 0px -60px; }
+.card-tiny.clubs-2 { background-position: -20px -60px; }
+.card-tiny.clubs-3 { background-position: -40px -60px; }
+.card-tiny.clubs-4 { background-position: -60px -60px; }
+.card-tiny.clubs-5 { background-position: -80px -60px; }
+.card-tiny.clubs-6 { background-position: -100px -60px; }
+.card-tiny.clubs-7 { background-position: -120px -60px; }
+.card-tiny.clubs-8 { background-position: -140px -60px; }
+.card-tiny.clubs-9 { background-position: -160px -60px; }
+.card-tiny.clubs-10 { background-position: -180px -60px; }
+.card-tiny.clubs-J { background-position: -200px -60px; }
+.card-tiny.clubs-Q { background-position: -220px -60px; }
+.card-tiny.clubs-K { background-position: -240px -60px; }
+
+.card-tiny.spades-A { background-position: 0px -90px; }
+.card-tiny.spades-2 { background-position: -20px -90px; }
+.card-tiny.spades-3 { background-position: -40px -90px; }
+.card-tiny.spades-4 { background-position: -60px -90px; }
+.card-tiny.spades-5 { background-position: -80px -90px; }
+.card-tiny.spades-6 { background-position: -100px -90px; }
+.card-tiny.spades-7 { background-position: -120px -90px; }
+.card-tiny.spades-8 { background-position: -140px -90px; }
+.card-tiny.spades-9 { background-position: -160px -90px; }
+.card-tiny.spades-10 { background-position: -180px -90px; }
+.card-tiny.spades-J { background-position: -200px -90px; }
+.card-tiny.spades-Q { background-position: -220px -90px; }
+.card-tiny.spades-K { background-position: -240px -90px; }

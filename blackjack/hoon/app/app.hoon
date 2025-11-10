@@ -4,10 +4,16 @@
 /+  http, blackjack
 /=  *  /common/wrapper
 ::  Static resources (load as cords)
-/*  index    %html   /app/site/index/html
-/*  style    %css   /app/site/style/css
-/*  game     %js    /app/site/game/js
-/*  sprites  %png   /app/site/sprites/png
+/*  index       %html   /app/site/index/html
+/*  style       %css    /app/site/style/css
+/*  game        %js     /app/site/game/js
+/*  sprites     %png    /app/site/sprites/png
+/*  watcher-html  %html   /app/site/watcher/html
+/*  watcher-js    %js     /app/site/watcher/js
+/*  watcher-css   %css    /app/site/watcher/css
+/*  wallet-html   %html   /app/site/wallet/html
+/*  wallet-js     %js     /app/site/wallet/js
+/*  wallet-css    %css    /app/site/wallet/css
 ::  Application state
 =>
 |%
@@ -138,6 +144,84 @@
                 ['Expires' '0']
             ==
             (to-octs:http q.sprites)
+        ==
+        ::
+          :: Serve watcher.html
+          [%blackjack %'watcher.html' ~]
+        ~&  "Matched route: /blackjack/watcher.html"
+        :_  state
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'text/html']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+            ==
+            (to-octs:http q.watcher-html)
+        ==
+        ::
+          :: Serve watcher.js
+          [%blackjack %'watcher.js' ~]
+        ~&  "Matched route: /blackjack/watcher.js"
+        :_  state
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'text/javascript']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+            ==
+            (to-octs:http q.watcher-js)
+        ==
+        ::
+          :: Serve watcher.css
+          [%blackjack %'watcher.css' ~]
+        ~&  "Matched route: /blackjack/watcher.css"
+        :_  state
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'text/css']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+            ==
+            (to-octs:http q.watcher-css)
+        ==
+        ::
+          :: Serve wallet.html
+          [%blackjack %'wallet.html' ~]
+        ~&  "Matched route: /blackjack/wallet.html"
+        :_  state
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'text/html']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+            ==
+            (to-octs:http q.wallet-html)
+        ==
+        ::
+          :: Serve wallet.js
+          [%blackjack %'wallet.js' ~]
+        ~&  "Matched route: /blackjack/wallet.js"
+        :_  state
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'text/javascript']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+            ==
+            (to-octs:http q.wallet-js)
+        ==
+        ::
+          :: Serve wallet.css
+          [%blackjack %'wallet.css' ~]
+        ~&  "Matched route: /blackjack/wallet.css"
+        :_  state
+        :_  ~
+        ^-  effect:http
+        :*  %res  id=id  %200
+            :~  ['Content-Type' 'text/css']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+            ==
+            (to-octs:http q.wallet-css)
         ==
         ::
           :: GET /api/sessions - List all active sessions

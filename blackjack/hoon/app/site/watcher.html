@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack - Session Watcher</title>
+    <link rel="stylesheet" href="/blackjack/style.css">
+    <link rel="stylesheet" href="/blackjack/watcher.css">
+</head>
+<body>
+    <div class="window">
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <div class="menu-item" onclick="window.location.href='/blackjack'">Game</div>
+            <div class="menu-item">Watcher</div>
+        </div>
+
+        <!-- Toolbar with Session Selector -->
+        <div class="toolbar">
+            <span class="toolbar-label">Session:</span>
+            <select class="session-selector" id="session-selector">
+                <option value="">-- Select a session --</option>
+            </select>
+            <button class="toolbar-btn" id="refresh-btn" onclick="refreshSessions()">Refresh</button>
+        </div>
+
+        <!-- Game Info -->
+        <div class="game-info">
+            <div class="info-section">
+                <span class="info-label">Game ID:</span>
+                <span id="game-id-display" class="info-value">-</span>
+            </div>
+            <div class="info-section">
+                <span class="info-label">Status:</span>
+                <span id="status-display" class="info-value">-</span>
+            </div>
+            <div class="info-section">
+                <span class="info-label">Bank:</span>
+                <span id="bank-amount" class="info-value">$0</span>
+            </div>
+            <div class="info-section">
+                <span class="info-label">Current Bet:</span>
+                <span id="current-bet" class="info-value">$0</span>
+            </div>
+        </div>
+
+        <!-- Game Area (Read-Only) -->
+        <div class="game-area">
+            <div class="hands-area">
+                <!-- Dealer Hand -->
+                <div class="hand-section">
+                    <div class="hand-label">Dealer</div>
+                    <div id="dealer-hand" class="hand">
+                        <!-- Cards will be added here -->
+                    </div>
+                    <div id="dealer-score" class="score"></div>
+                </div>
+
+                <!-- Player Hand -->
+                <div class="hand-section">
+                    <div class="hand-label">Player</div>
+                    <div id="player-hand" class="hand">
+                        <!-- Cards will be added here -->
+                    </div>
+                    <div id="player-score" class="score"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="history-section">
+            <div class="history-header">Hand History</div>
+            <div class="history-container" id="history-container">
+                <!-- History entries will be added here -->
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div id="status-message">Select a session to watch</div>
+        </div>
+    </div>
+
+    <script src="/blackjack/watcher.js"></script>
+</body>
+</html>
