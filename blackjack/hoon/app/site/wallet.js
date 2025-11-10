@@ -91,12 +91,12 @@ function mockSendFunds() {
         updateDisplay();
         updateTransactionList();
         saveState();
-        setStatus(`Deposit of $${amount} confirmed!`);
+        setStatus(`Deposit of N$${amount} confirmed!`);
     }, 3000);
 
     updateTransactionList();
     saveState();
-    setStatus(`Deposit of $${amount} pending confirmation (mock: 3 seconds)...`);
+    setStatus(`Deposit of N$${amount} pending confirmation (mock: 3 seconds)...`);
 
     // Clear inputs
     document.getElementById('send-amount').value = '';
@@ -141,13 +141,13 @@ function mockCashOut() {
         tx.status = 'confirmed';
         updateTransactionList();
         saveState();
-        setStatus(`Withdrawal of $${amount} confirmed!`);
+        setStatus(`Withdrawal of N$${amount} confirmed!`);
     }, 2000);
 
     updateDisplay();
     updateTransactionList();
     saveState();
-    setStatus(`Withdrawal of $${amount} pending confirmation (mock: 2 seconds)...`);
+    setStatus(`Withdrawal of N$${amount} pending confirmation (mock: 2 seconds)...`);
 
     // Clear inputs
     document.getElementById('cashout-pkh').value = '';
@@ -156,8 +156,8 @@ function mockCashOut() {
 
 // Update display
 function updateDisplay() {
-    document.getElementById('available-balance').textContent = `$${availableBalance}`;
-    document.getElementById('betting-pool').textContent = `$${bettingPool}`;
+    document.getElementById('available-balance').textContent = `N$${availableBalance}`;
+    document.getElementById('betting-pool').textContent = `N$${bettingPool}`;
 }
 
 // Update transaction list
@@ -184,7 +184,7 @@ function updateTransactionList() {
         txDiv.innerHTML = `
             <div class="tx-header">
                 <span class="tx-type ${typeClass}">${tx.type.toUpperCase()}</span>
-                <span class="tx-amount">$${tx.amount}</span>
+                <span class="tx-amount">N$${tx.amount}</span>
                 <span class="tx-status ${statusClass}">${tx.status}</span>
             </div>
             <div class="tx-details">
