@@ -81,9 +81,8 @@
     =/  entropy=@  eny.input.ovum
     ::
     ::  Check if this is a config poke (non-HTTP)
-    ::  Config pokes have format: [%init-config wallet-pkh private-key public-key confirmation-blocks enable-blockchain initial-bank max-history]
-    =/  config-poke=(unit [%init-config wallet-pkh=@t private-key=@t public-key=@t confirmation-blocks=@ud enable-blockchain=? initial-bank=@ud max-history=@ud])
-      ((soft [%init-config @t @t @t @ud ? @ud @ud]) cause.input.ovum)
+    =/  config-poke=(unit config-poke:blackjack)
+      ((soft config-poke:blackjack) cause.input.ovum)
     ?^  config-poke
       ::  Handle init-config poke
       ~&  >>  "Received init-config poke"

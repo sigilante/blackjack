@@ -22,7 +22,6 @@ pub struct BlackjackConfig {
 pub struct ServerConfig {
     pub wallet_pkh: String,
     pub private_key: String,
-    pub public_key: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -64,9 +63,6 @@ impl BlackjackConfig {
         if self.server.private_key.contains("REPLACE_WITH") {
             anyhow::bail!("Server private_key must be set in config file");
         }
-        if self.server.public_key.contains("REPLACE_WITH") {
-            anyhow::bail!("Server public_key must be set in config file");
-        }
 
         // Validate client_type
         let client_type = self.grpc.client_type.as_str();
@@ -85,7 +81,6 @@ impl BlackjackConfig {
         // Server config
         let wallet_pkh = make_tas(slab, &self.server.wallet_pkh).as_noun();
         let private_key = make_tas(slab, &self.server.private_key).as_noun();
-        let public_key = make_tas(slab, &self.server.public_key).as_noun();
 
         // Blockchain config
         let confirmation_blocks = D(self.blockchain.confirmation_blocks);
@@ -105,7 +100,6 @@ impl BlackjackConfig {
             &[
                 wallet_pkh,
                 private_key,
-                public_key,
                 confirmation_blocks,
                 enable_blockchain,
                 initial_bank,
@@ -134,7 +128,8 @@ pub async fn init_with_config(
     nockapp
         .poke(wire, slab)
         .await
-        .context("Failed to poke config into kernel")?;
+        .unwrap();
+        // .context("Failed to poke config into kernel")?;
 
     info!("Successfully initialized blackjack server with config");
 
@@ -170,7 +165,6 @@ mod tests {
             server: ServerConfig {
                 wallet_pkh: "test".to_string(),
                 private_key: "REPLACE_WITH_ACTUAL_PRIVATE_KEY".to_string(),
-                public_key: "key".to_string(),
             },
             blockchain: BlockchainConfig {
                 confirmation_blocks: 3,
@@ -191,7 +185,6 @@ mod tests {
 
         // Should succeed with real keys
         config.server.private_key = "real_key".to_string();
-        config.server.public_key = "real_pubkey".to_string();
         assert!(config.validate().is_ok());
     }
 
@@ -201,7 +194,6 @@ mod tests {
             server: ServerConfig {
                 wallet_pkh: "test_pkh".to_string(),
                 private_key: "test_priv".to_string(),
-                public_key: "test_pub".to_string(),
             },
             blockchain: BlockchainConfig {
                 confirmation_blocks: 3,

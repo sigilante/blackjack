@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 server: blackjack::ServerConfig {
                     wallet_pkh: "9yPePjfWAdUnzaQKyxcRXKRa5PpUzKKEwtpECBZsUYt9Jd7egSDEWoV".to_string(),
                     private_key: "PLACEHOLDER_PRIVKEY".to_string(),
-                    public_key: "PLACEHOLDER_PUBKEY".to_string(),
+                    // public_key: "PLACEHOLDER_PUBKEY".to_string(),
                 },
                 blockchain: blackjack::BlockchainConfig {
                     confirmation_blocks: 3,

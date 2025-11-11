@@ -2,16 +2,11 @@
 # This config is loaded by the Rust driver and poked into the Hoon kernel on startup
 
 [server]
-# Server's wallet public key hash (base58-encoded)
+# Server's wallet v1 public key hash (base58-encoded)
 wallet_pkh = "9yPePjfWAdUnzaQKyxcRXKRa5PpUzKKEwtpECBZsUYt9Jd7egSDEWoV"
 
 # Server's private key (base58-encoded schnorr seckey)
-# TODO: Replace with actual server private key from fakenet
-private_key = "REPLACE_WITH_ACTUAL_PRIVATE_KEY"
-
-# Server's public key (base58-encoded schnorr pubkey)
-# TODO: Replace with actual server public key from fakenet
-public_key = "REPLACE_WITH_ACTUAL_PUBLIC_KEY"
+private_key = "7VnoWdeQBFLxQAwwqmWnjY4tN6MjKFXRZivPje9t2iRT"
 
 [blockchain]
 # Number of confirmations required for deposits (typically 3)

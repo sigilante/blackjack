@@ -583,4 +583,16 @@
   %+  weld  ",\"message\":\""
   %+  weld  ?:(tx-ready "Transaction built successfully - awaiting submission" "Transaction structure prepared")
   "\"}"
+::
++$  config-poke
+  $:  %init-config
+      wallet-pkh=@t
+      private-key=@t
+      public-key=@t
+      confirmation-blocks=@ud
+      enable-blockchain=?
+      initial-bank=@ud
+      max-history=@ud
+  ==
+::
 --
