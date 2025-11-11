@@ -409,7 +409,8 @@ async function startNewGame() {
         // Call server API to create new session
         const response = await fetch('/blackjack/api/session/create', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'}
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
         });
 
         if (!response.ok) {
