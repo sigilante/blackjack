@@ -4,14 +4,13 @@
 /+  http, blackjack
 /=  *  /common/wrapper
 ::  Wallet imports (for transaction building)
-::  TODO: Add these when wallet dependencies are available
-::  /=  transact  /common/tx-engine
-::  /=  tx-builder  /apps/wallet/lib/tx-builder-v1
+/=  transact  /common/tx-engine
+/=  tx-builder  /apps/wallet/lib/tx-builder-v1
 ::  Static resources (load as cords)
-/*  index       %html   /app/site/index/html
-/*  style       %css    /app/site/style/css
-/*  game        %js     /app/site/game/js
-/*  sprites     %png    /app/site/sprites/png
+/*  index         %html   /app/site/index/html
+/*  style         %css    /app/site/style/css
+/*  game          %js     /app/site/game/js
+/*  sprites       %png    /app/site/sprites/png
 /*  watcher-html  %html   /app/site/watcher/html
 /*  watcher-js    %js     /app/site/watcher/js
 /*  watcher-css   %css    /app/site/watcher/css
