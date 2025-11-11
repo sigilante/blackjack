@@ -39,6 +39,11 @@
       max-history-entries=20
       notes=~
   ==
+--
+::  Application logic
+=>
+|%
+++  moat  (keep server-state)
 ::
 ::  Get config (either from state or default)
 ::
@@ -48,11 +53,6 @@
   ?~  config.state
     default-config
   u.config.state
---
-::  Application logic
-=>
-|%
-++  moat  (keep server-state)
 ::
 ++  inner
   |_  state=server-state
@@ -180,7 +180,7 @@
                 ['Pragma' 'no-cache']
                 ['Expires' '0']
             ==
-            (to-octs:http q.sprites)
+            sprites
         ==
         ::
           :: Serve watcher.html
