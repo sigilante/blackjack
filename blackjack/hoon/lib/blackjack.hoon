@@ -87,7 +87,6 @@
 +$  runtime-config
   $:  wallet-pkh=@t                        :: Server's wallet PKH
       private-key=(unit @t)                :: Server's private key (base58)
-      public-key=(unit @t)                 :: Server's public key (base58)
       confirmation-blocks=@ud              :: Required confirmations
       enable-blockchain=?                  :: Blockchain integration enabled
       initial-bank=@ud                     :: Initial bank amount
@@ -567,6 +566,8 @@
     ?:(dealer-turn.game.sess "true" "false")
     ",\"history\":"
     (history-list-to-json history.sess)
+    "},\"winLoss\":"
+    (a-co:co win-loss.game.sess)
     "}"
   ==
 ::
@@ -620,7 +621,6 @@
   $:  %init-config
       wallet-pkh=@t
       private-key=@t
-      public-key=@t
       confirmation-blocks=@ud
       enable-blockchain=?
       initial-bank=@ud

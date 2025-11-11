@@ -60,6 +60,7 @@ async function initGame() {
                 gameState.playerHand = session.playerHand || [];
                 gameState.dealerHand = session.dealerHand || [];
                 gameState.dealerTurn = session.dealerTurn;
+                gameState.winLoss = session.winLoss || 0;
 
                 console.log('Restored gameState:', {
                     bank: gameState.bank,
@@ -67,7 +68,8 @@ async function initGame() {
                     gameInProgress: gameState.gameInProgress,
                     dealerTurn: gameState.dealerTurn,
                     playerHandLength: gameState.playerHand.length,
-                    dealerHandLength: gameState.dealerHand.length
+                    dealerHandLength: gameState.dealerHand.length,
+                    winLoss: gameState.winLoss
                 });
 
                 // Update button states based on game state
@@ -429,7 +431,7 @@ async function startNewGame() {
 
         gameState.bank = data.bank;  // Initial bank from server
         gameState.currentBet = 0;
-        gameState.winLoss = 0;
+        gameState.winLoss = data.winLoss;
         gameState.gameInProgress = false;
         gameState.dealerTurn = false;
         gameState.playerHand = [];

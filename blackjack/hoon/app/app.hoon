@@ -30,14 +30,13 @@
 ::
 ++  default-config
   ^-  runtime-config:blackjack
-  :*  wallet-pkh='9yPePjfWAdUnzaQKyxcRXKRa5PpUzKKEwtpECBZsUYt9Jd7egSDEWoV'
+  :*  wallet-pkh=%''
       private-key=~
-      public-key=~
       confirmation-blocks=3
       enable-blockchain=%.n
       initial-bank=1.000
       max-history-entries=20
-      notes=~
+      notes=*(map @t *)
   ==
 ::
 ::  Get config (either from state or default)
@@ -89,7 +88,6 @@
       =/  new-config=runtime-config:blackjack
         :*  wallet-pkh.u.config-poke
             `private-key.u.config-poke
-            `public-key.u.config-poke
             confirmation-blocks.u.config-poke
             enable-blockchain.u.config-poke
             initial-bank.u.config-poke
@@ -108,7 +106,7 @@
     ::  Parse request into components.
     =/  [id=@ uri=@t =method:http headers=(list header:http) body=(unit octs:http)]
       +.u.sof-cau
-    ~&  "Received request: {<method>} {<uri>}"
+    ~&  >  "Received request: {<method>} {<uri>}"
     =/  uri=path  (pa:dejs:http [%s uri])
     ~&  >>  "Parsed path: {<uri>}"
     ~&  >>  "Method: {<method>}"
@@ -352,7 +350,8 @@
             ==
             (to-octs:http (crip json))
         ==
-        ::  Deal initial hands
+        ::
+          ::  Deal initial hands
           [%blackjack %api game-id:blackjack %deal ~]
         =/  =game-id:blackjack  (snag 2 `path`uri)
         ~&  >>  "Matched /blackjack/api/{<game-id>}/deal route"
@@ -430,6 +429,7 @@
             (to-octs:http (crip json))
         ==
         ::
+          ::  Player hits
           [%blackjack %api game-id:blackjack %hit ~]
         =/  =game-id:blackjack  (snag 2 `path`uri)
         ~&  >>  "Matched /blackjack/api/{<game-id>}/hit route"
@@ -482,6 +482,7 @@
             (to-octs:http (crip json))
         ==
         ::
+          ::  Player stands
           [%blackjack %api game-id:blackjack %stand ~]
         =/  =game-id:blackjack  (snag 2 `path`uri)
         ~&  >>  "Matched /blackjack/api/{<game-id>}/stand route"
@@ -566,6 +567,7 @@
             (to-octs:http (crip json))
         ==
         ::
+          ::  Player doubles down
           [%blackjack %api game-id:blackjack %double ~]
         =/  =game-id:blackjack  (snag 2 `path`uri)
         ~&  >>  "Matched /blackjack/api/{<game-id>}/double route"
@@ -700,7 +702,7 @@
             (to-octs:http (crip json))
         ==
         ::
-        ::  Cash out - withdraw funds from game to player's wallet
+          ::  Cash out - withdraw funds from game to player's wallet
           [%blackjack %api %wallet %cashout ~]
         ~&  >>  "Matched /blackjack/api/wallet/cashout route"
         ::  Parse body to get game-id, player-pkh, and amount
