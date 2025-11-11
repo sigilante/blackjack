@@ -523,6 +523,7 @@
         =/  new-bank=@ud  (add bank.current-game payout)
         ~&  >  "New bank: {<new-bank>}"
         =/  dealer-score=@ud  (hand-value:blackjack final-dealer-hand)
+        ~&  >  "Win/loss: {<win-loss.current-game>}"
         ::
         ::  Calculate win/loss change (payout includes return of bet)
         =/  profit=@sd
