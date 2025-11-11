@@ -417,7 +417,7 @@
         ::
         ::  Build response (note: using 0 for backward compat with old sessionId field)
         =/  json=tape
-          (make-json-deal:blackjack player-hand dealer-hand player-score dealer-visible 0 new-bank)
+          (make-json-deal:blackjack player-hand dealer-hand player-score dealer-visible 0 new-bank win-loss.updated-game)
         ::
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
@@ -470,7 +470,7 @@
           current-session(game updated-game, last-activity now.input.ovum, status ?:(busted %ended %active))
         ::
         =/  json=tape
-          (make-json-hit:blackjack new-card new-player-hand new-score busted bank.updated-game)
+          (make-json-hit:blackjack new-card new-player-hand new-score busted bank.updated-game win-loss.updated-game)
         ::
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
@@ -555,7 +555,7 @@
           current-session(game updated-game, last-activity now.input.ovum, status %ended, history new-history)
         ::
         =/  json=tape
-          (make-json-stand:blackjack final-dealer-hand dealer-score outcome payout new-bank)
+          (make-json-stand:blackjack final-dealer-hand dealer-score outcome payout new-bank new-win-loss)
         ::
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
@@ -634,7 +634,7 @@
           =/  final-session=session-state:blackjack
             current-session(game final-game, last-activity now.input.ovum, status %ended, history new-history)
           =/  json=tape
-            (make-json-double:blackjack new-player-hand dealer-hand-current dealer-score %loss 0 new-bank)
+            (make-json-double:blackjack new-player-hand dealer-hand-current dealer-score %loss 0 new-bank new-win-loss)
           :_  state(sessions (~(put by sessions.state) game-id final-session))
           :_  ~
           ^-  effect:http
@@ -690,7 +690,7 @@
           current-session(game final-game, last-activity now.input.ovum, status %ended, history new-history)
         ::
         =/  json=tape
-          (make-json-double:blackjack new-player-hand final-dealer-hand dealer-score outcome payout final-bank)
+          (make-json-double:blackjack new-player-hand final-dealer-hand dealer-score outcome payout final-bank new-win-loss)
         ::
         :_  state(sessions (~(put by sessions.state) game-id final-session))
         :_  ~

@@ -502,6 +502,7 @@ async function dealHand() {
         gameState.gameInProgress = true;
         gameState.dealerTurn = false;
         gameState.bank = data.bank;  // Sync to server's bank (should match our optimistic update)
+        gameState.winLoss = data.winLoss || 0;  // Sync win/loss from server
 
         // Parse hands from server response
         // Server returns hands as arrays of cards directly
@@ -591,14 +592,13 @@ async function hit() {
         // Update player hand and bank from server
         gameState.playerHand = data.hand;
         gameState.bank = data.bank;
+        gameState.winLoss = data.winLoss || 0;  // Sync win/loss from server
         updateDisplay();
 
         const playerValue = calculateHandValue(gameState.playerHand);
 
         if (data.busted) {
             // Bust - bank already updated from server, clear bet but keep hands visible
-            // Update win/loss tracking - busting means losing the bet
-            gameState.winLoss -= gameState.currentBet;
 
             gameState.dealerTurn = true;
             gameState.gameInProgress = false;
@@ -656,12 +656,7 @@ async function stand() {
         // Update dealer hand and bank from server
         gameState.dealerHand = data.dealerHand;
         gameState.bank = data.bank;
-
-        // Update win/loss tracking based on outcome
-        // Payout includes original bet, so profit = payout - bet
-        const betAmount = gameState.currentBet;
-        const profit = data.payout - betAmount;
-        gameState.winLoss += profit;
+        gameState.winLoss = data.winLoss || 0;  // Sync win/loss from server
 
         updateDisplay();
 
@@ -731,12 +726,7 @@ async function doubleDown() {
         gameState.playerHand = data.playerHand || gameState.playerHand;
         gameState.dealerHand = data.dealerHand;
         gameState.bank = data.bank;
-
-        // Update win/loss tracking for doubled bet
-        // When doubling down, the total bet is 2x the original
-        const totalBet = gameState.currentBet * 2;
-        const profit = data.payout - totalBet;
-        gameState.winLoss += profit;
+        gameState.winLoss = data.winLoss || 0;  // Sync win/loss from server
 
         updateDisplay();
 

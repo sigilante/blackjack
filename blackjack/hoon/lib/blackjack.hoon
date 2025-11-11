@@ -295,7 +295,7 @@
   ==
 ::
 ++  make-json-deal
-  |=  [player=(list hand) dealer=(list hand) score=@ud visible=card sid=@ud bank=@ud]
+  |=  [player=(list hand) dealer=(list hand) score=@ud visible=card sid=@ud bank=@ud win-loss=@sd]
   ^-  tape
   ;:  weld
     "\{\"playerHand\":"
@@ -310,11 +310,13 @@
     (a-co:co sid)
     ",\"bank\":"
     (a-co:co bank)
+    ",\"winLoss\":"
+    (a-co:co win-loss)
   "}"
   ==
 ::
 ++  make-json-hit
-  |=  [new-card=card hand=hand score=@ud busted=? bank=@ud]
+  |=  [new-card=card hand=hand score=@ud busted=? bank=@ud win-loss=@sd]
   ^-  tape
   ;:  weld
     "\{\"newCard\":"
@@ -327,11 +329,13 @@
     ?:(busted "true" "false")
     ",\"bank\":"
     (a-co:co bank)
+    ",\"winLoss\":"
+    (a-co:co win-loss)
     "}"
   ==
 ::
 ++  make-json-stand
-  |=  [dealer=hand score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud]
+  |=  [dealer=hand score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud win-loss=@sd]
   ^-  tape
   ;:  weld
     "\{\"dealerHand\":"
@@ -344,11 +348,13 @@
     (a-co:co payout)
     ",\"bank\":"
     (a-co:co bank)
+    ",\"winLoss\":"
+    (a-co:co win-loss)
     "}"
   ==
 ::
 ++  make-json-double
-  |=  [player=hand dealer=hand dealer-score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud]
+  |=  [player=hand dealer=hand dealer-score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud win-loss=@sd]
   ^-  tape
   ;:  weld
     "\{\"playerHand\":"
@@ -363,6 +369,8 @@
     (a-co:co payout)
     ",\"bank\":"
     (a-co:co bank)
+    ",\"winLoss\":"
+    (a-co:co win-loss)
     "}"
   ==
 ::
@@ -566,7 +574,7 @@
     ?:(dealer-turn.game.sess "true" "false")
     ",\"history\":"
     (history-list-to-json history.sess)
-    "},\"winLoss\":"
+    ",\"winLoss\":"
     (a-co:co win-loss.game.sess)
     "}"
   ==
