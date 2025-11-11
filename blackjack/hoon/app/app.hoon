@@ -23,18 +23,31 @@
 +$  server-state
   $:  %0
       sessions=(map game-id:blackjack session-state:blackjack)
+      config=(unit runtime-config:blackjack)  :: Runtime config (poked from Rust)
   ==
 ::
-::  Server configuration (hardcoded for now)
+::  Default server configuration (fallback if no config poked)
 ::
-++  server-config
-  ^-  server-config:blackjack
+++  default-config
+  ^-  runtime-config:blackjack
   :*  wallet-pkh='9yPePjfWAdUnzaQKyxcRXKRa5PpUzKKEwtpECBZsUYt9Jd7egSDEWoV'
+      private-key=~
+      public-key=~
       confirmation-blocks=3
       enable-blockchain=%.n
       initial-bank=1.000
       max-history-entries=20
+      notes=~
   ==
+::
+::  Get config (either from state or default)
+::
+++  get-config
+  |=  state=server-state
+  ^-  runtime-config:blackjack
+  ?~  config.state
+    default-config
+  u.config.state
 --
 ::  Application logic
 =>
@@ -66,7 +79,28 @@
     ^-  [(list effect:http) server-state]
     ::  Extract entropy from poke input
     =/  entropy=@  eny.input.ovum
-    ::  Parse HTTP request
+    ::
+    ::  Check if this is a config poke (non-HTTP)
+    ::  Config pokes have format: [%init-config wallet-pkh private-key public-key confirmation-blocks enable-blockchain initial-bank max-history]
+    =/  config-poke=(unit [%init-config wallet-pkh=@t private-key=@t public-key=@t confirmation-blocks=@ud enable-blockchain=? initial-bank=@ud max-history=@ud])
+      ((soft [%init-config @t @t @t @ud ? @ud @ud]) cause.input.ovum)
+    ?^  config-poke
+      ::  Handle init-config poke
+      ~&  >>  "Received init-config poke"
+      =/  new-config=runtime-config:blackjack
+        :*  wallet-pkh.u.config-poke
+            `private-key.u.config-poke
+            `public-key.u.config-poke
+            confirmation-blocks.u.config-poke
+            enable-blockchain.u.config-poke
+            initial-bank.u.config-poke
+            max-history.u.config-poke
+            ~  :: empty notes map initially
+        ==
+      ~&  >>  "Config updated with PKH: {<wallet-pkh.new-config>}"
+      [~ state(config `new-config)]
+    ::
+    ::  Otherwise, parse as HTTP request
     =/  sof-cau=(unit cause:http)  ((soft cause:http) cause.input.ovum)
     ?~  sof-cau
       ~&  "cause incorrectly formatted!"
@@ -290,7 +324,7 @@
         =/  =game-id:blackjack  (generate-uuid:blackjack entropy)
         ~&  >>  "Generated game-id: {<game-id>}"
         ::  Create initial game state
-        =/  config=server-config:blackjack  server-config
+        =/  config=runtime-config:blackjack  (get-config state)
         =/  initial-game=game-state-inner:blackjack
           (initial-game-state:blackjack initial-bank.config)
         ::  Create session state
@@ -512,7 +546,7 @@
               timestamp=now.input.ovum
           ==
         ::  Append to history (keep last N hands per config)
-        =/  config=server-config:blackjack  server-config
+        =/  config=runtime-config:blackjack  (get-config state)
         =/  new-history=(list hand-history:blackjack)
           (append-to-history:blackjack history-entry history.current-session max-history-entries.config)
         ::
@@ -592,7 +626,7 @@
                 timestamp=now.input.ovum
             ==
           ::  Append to history (keep last N hands per config)
-          =/  config=server-config:blackjack  server-config
+          =/  config=runtime-config:blackjack  (get-config state)
           =/  new-history=(list hand-history:blackjack)
             (append-to-history:blackjack history-entry history.current-session max-history-entries.config)
           ::  Update session state (set status to ended and add history)
@@ -646,7 +680,7 @@
               timestamp=now.input.ovum
           ==
         ::  Append to history (keep last N hands per config)
-        =/  config=server-config:blackjack  server-config
+        =/  config=runtime-config:blackjack  (get-config state)
         =/  new-history=(list hand-history:blackjack)
           (append-to-history:blackjack history-entry history.current-session max-history-entries.config)
         ::

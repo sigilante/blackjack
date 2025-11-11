@@ -81,6 +81,19 @@
       initial-bank=@ud             :: Initial bank for new sessions (default 1000)
       max-history-entries=@ud      :: Maximum history entries to keep (default 20)
   ==
+::
+::  Runtime server configuration (includes keys and notes)
+::  This gets poked in from Rust driver on startup
++$  runtime-config
+  $:  wallet-pkh=@t                        :: Server's wallet PKH
+      private-key=(unit @t)                :: Server's private key (base58)
+      public-key=(unit @t)                 :: Server's public key (base58)
+      confirmation-blocks=@ud              :: Required confirmations
+      enable-blockchain=?                  :: Blockchain integration enabled
+      initial-bank=@ud                     :: Initial bank amount
+      max-history-entries=@ud              :: Max history entries
+      notes=(map @t *)                     :: Server's UTXOs (note name -> note data)
+  ==
 --
 ::  Game mechanics
 |%

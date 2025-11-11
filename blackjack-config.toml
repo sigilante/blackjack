@@ -1,0 +1,37 @@
+# Blackjack NockApp Configuration
+# This config is loaded by the Rust driver and poked into the Hoon kernel on startup
+
+[server]
+# Server's wallet public key hash (base58-encoded)
+wallet_pkh = "9yPePjfWAdUnzaQKyxcRXKRa5PpUzKKEwtpECBZsUYt9Jd7egSDEWoV"
+
+# Server's private key (base58-encoded schnorr seckey)
+# TODO: Replace with actual server private key from fakenet
+private_key = "REPLACE_WITH_ACTUAL_PRIVATE_KEY"
+
+# Server's public key (base58-encoded schnorr pubkey)
+# TODO: Replace with actual server public key from fakenet
+public_key = "REPLACE_WITH_ACTUAL_PUBLIC_KEY"
+
+[blockchain]
+# Number of confirmations required for deposits (typically 3)
+confirmation_blocks = 3
+
+# Enable blockchain integration (set to false for testing without blockchain)
+enable_blockchain = false
+
+[game]
+# Initial bank amount for new game sessions (in nicks)
+initial_bank = 1000
+
+# Maximum number of hand history entries to keep per session
+max_history_entries = 20
+
+[grpc]
+# Nockchain gRPC endpoint for querying notes/balance
+# Used by Rust driver to sync wallet state
+endpoint = "http://127.0.0.1:50051"
+
+# Whether to use private (authenticated) or public gRPC client
+# Options: "private", "public"
+client_type = "private"
