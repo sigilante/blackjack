@@ -287,11 +287,13 @@
 ++  make-json-new-game
   |=  [sid=@ud bank=@ud]
   ^-  tape
-  %+  weld  "\{\"sessionId\":"
-  %+  weld  (a-co:co sid)
-  %+  weld  ",\"bank\":"
-  %+  weld  (a-co:co bank)
-  "}"
+  ;:  weld
+    "\{\"sessionId\":"
+    (a-co:co sid)
+    ",\"bank\":"
+    (a-co:co bank)
+    "}"
+  ==
 ::
 ++  make-json-deal
   |=  [player=(list hand) dealer=(list hand) score=@ud visible=card sid=@ud bank=@ud]
@@ -315,49 +317,55 @@
 ++  make-json-hit
   |=  [new-card=card hand=hand score=@ud busted=? bank=@ud]
   ^-  tape
-  %+  weld  "\{\"newCard\":"
-  %+  weld  (card-to-json new-card)
-  %+  weld  ",\"hand\":"
-  %+  weld  (hand-to-json hand)
-  %+  weld  ",\"score\":"
-  %+  weld  (a-co:co score)
-  %+  weld  ",\"busted\":"
-  %+  weld  ?:(busted "true" "false")
-  %+  weld  ",\"bank\":"
-  %+  weld  (a-co:co bank)
-  "}"
+  ;:  weld
+    "\{\"newCard\":"
+    (card-to-json new-card)
+    ",\"hand\":"
+    (hand-to-json hand)
+    ",\"score\":"
+    (a-co:co score)
+    ",\"busted\":"
+    ?:(busted "true" "false")
+    ",\"bank\":"
+    (a-co:co bank)
+    "}"
+  ==
 ::
 ++  make-json-stand
   |=  [dealer=hand score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud]
   ^-  tape
-  %+  weld  "\{\"dealerHand\":"
-  %+  weld  (hand-to-json dealer)
-  %+  weld  ",\"dealerScore\":"
-  %+  weld  (a-co:co score)
-  %+  weld  ",\"outcome\":\""
-  %+  weld  (scow %tas outcome)
-  %+  weld  "\",\"payout\":"
-  %+  weld  (a-co:co payout)
-  %+  weld  ",\"bank\":"
-  %+  weld  (a-co:co bank)
-  "}"
+  ;:  weld
+    "\{\"dealerHand\":"
+    (hand-to-json dealer)
+    ",\"dealerScore\":"
+    (a-co:co score)
+    ",\"outcome\":\""
+    (scow %tas outcome)
+    "\",\"payout\":"
+    (a-co:co payout)
+    ",\"bank\":"
+    (a-co:co bank)
+    "}"
+  ==
 ::
 ++  make-json-double
   |=  [player=hand dealer=hand dealer-score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud]
   ^-  tape
-  %+  weld  "\{\"playerHand\":"
-  %+  weld  (hand-to-json player)
-  %+  weld  ",\"dealerHand\":"
-  %+  weld  (hand-to-json dealer)
-  %+  weld  ",\"dealerScore\":"
-  %+  weld  (a-co:co dealer-score)
-  %+  weld  ",\"outcome\":\""
-  %+  weld  (scow %tas outcome)
-  %+  weld  "\",\"payout\":"
-  %+  weld  (a-co:co payout)
-  %+  weld  ",\"bank\":"
-  %+  weld  (a-co:co bank)
-  "}"
+  ;:  weld
+    "\{\"playerHand\":"
+    (hand-to-json player)
+    ",\"dealerHand\":"
+    (hand-to-json dealer)
+    ",\"dealerScore\":"
+    (a-co:co dealer-score)
+    ",\"outcome\":\""
+    (scow %tas outcome)
+    "\",\"payout\":"
+    (a-co:co payout)
+    ",\"bank\":"
+    (a-co:co bank)
+    "}"
+  ==
 ::
 ::  Session management helpers
 ++  generate-uuid
@@ -366,11 +374,13 @@
   ::  Generate UUID-style identifier using entropy
   =/  hex=tape  (scow %ux ent)
   =/  uuid=tape
-    %+  weld  (scag 8 hex)
-    %+  weld  "-"
-    %+  weld  (scag 4 (slag 8 hex))
-    %+  weld  "-"
-    (scag 12 (slag 12 hex))
+    ;:  weld
+      (scag 8 hex)
+      "-"
+      (scag 4 (slag 8 hex))
+      "-"
+      (scag 12 (slag 12 hex))
+    ==
   (crip uuid)
 ::
 ++  initial-game-state
@@ -390,35 +400,41 @@
 ++  make-json-session-created
   |=  [game-id=@t server-pkh=@t bank=@ud]
   ^-  tape
-  %+  weld  "\{\"gameId\":\""
-  %+  weld  (trip game-id)
-  %+  weld  "\",\"serverWalletPkh\":\""
-  %+  weld  (trip server-pkh)
-  %+  weld  "\",\"bank\":"
-  %+  weld  (a-co:co bank)
-  "}"
+  ;:  weld
+    "\{\"gameId\":\""
+    (trip game-id)
+    "\",\"serverWalletPkh\":\""
+    (trip server-pkh)
+    "\",\"bank\":"
+    (a-co:co bank)
+    "}"
+  ==
 ::
 ++  make-json-session-status
   |=  [game-id=@t status=session-status player-pkh=(unit @t) bank=@ud]
   ^-  tape
-  %+  weld  "\{\"gameId\":\""
-  %+  weld  (trip game-id)
-  %+  weld  "\",\"status\":\""
-  %+  weld  (scow %tas status)
-  %+  weld  "\",\"playerPkh\":"
-  %+  weld  ?~(player-pkh "null" (weld "\"" (weld (trip u.player-pkh) "\"")))
-  %+  weld  ",\"bank\":"
-  %+  weld  (a-co:co bank)
-  "}"
+  ;:  weld
+    "\{\"gameId\":\""
+    (trip game-id)
+    "\",\"status\":\""
+    (scow %tas status)
+    "\",\"playerPkh\":"
+    ?~(player-pkh "null" (weld "\"" (weld (trip u.player-pkh) "\"")))
+    ",\"bank\":"
+    (a-co:co bank)
+    "}"
+  ==
 ::
 ++  make-json-error
   |=  [code=@ud message=tape]
   ^-  tape
-  %+  weld  "\{\"error\":\""
-  %+  weld  message
-  %+  weld  "\",\"code\":"
-  %+  weld  (a-co:co code)
-  "}"
+  ;:  weld
+    "\{\"error\":\""
+    message
+    "\",\"code\":"
+    (a-co:co code)
+    "}"
+  ==
 ::
 ++  append-to-history
   |=  [new-entry=hand-history old-history=(list hand-history) max-entries=@ud]
@@ -458,19 +474,21 @@
 ++  hand-history-to-json
   |=  hist=hand-history
   ^-  tape
-  %+  weld  "\{\"bet\":"
-  %+  weld  (a-co:co bet.hist)
-  %+  weld  ",\"playerHand\":"
-  %+  weld  (hand-to-json player-hand.hist)
-  %+  weld  ",\"dealerHand\":"
-  %+  weld  (hand-to-json dealer-hand.hist)
-  %+  weld  ",\"outcome\":\""
-  %+  weld  (scow %tas outcome.hist)
-  %+  weld  "\",\"payout\":"
-  %+  weld  (a-co:co payout.hist)
-  %+  weld  ",\"bankAfter\":"
-  %+  weld  (a-co:co bank-after.hist)
-  "}"
+  ;:  weld
+    "\{\"bet\":"
+    (a-co:co bet.hist)
+    ",\"playerHand\":"
+    (hand-to-json player-hand.hist)
+    ",\"dealerHand\":"
+    (hand-to-json dealer-hand.hist)
+    ",\"outcome\":\""
+    (scow %tas outcome.hist)
+    "\",\"payout\":"
+    (a-co:co payout.hist)
+    ",\"bankAfter\":"
+    (a-co:co bank-after.hist)
+    "}"
+  ==
 ::
 ++  history-list-to-json
   |=  history=(list hand-history)
@@ -480,18 +498,22 @@
   =/  json-items=(list tape)
     %+  turn  history
     |=(hist=hand-history (hand-history-to-json hist))
-  %+  weld  "["
-  %+  weld  (join-tapes json-items ",")
-  "]"
+    ;:  weld
+      "["
+      (join-tapes json-items ",")
+      "]"
+    ==
 ::
 ++  join-tapes
   |=  [items=(list tape) separator=tape]
   ^-  tape
   ?~  items  ""
   ?~  t.items  i.items
-  %+  weld  i.items
-  %+  weld  separator
-  $(items t.items)
+  ;:  weld
+    i.items
+    separator
+    $(items t.items)
+  ==
 ::
 ++  make-json-sessions-list
   |=  sessions=(list [game-id=@t status=session-status bank=@ud deals-made=@ud])
@@ -502,45 +524,51 @@
     %+  turn  sessions
     |=  [game-id=@t status=session-status bank=@ud deals-made=@ud]
     ^-  tape
-    %+  weld  "\{\"gameId\":\""
-    %+  weld  (trip game-id)
-    %+  weld  "\",\"status\":\""
-    %+  weld  (scow %tas status)
-    %+  weld  "\",\"bank\":"
-    %+  weld  (a-co:co bank)
-    %+  weld  ",\"dealsMade\":"
-    %+  weld  (a-co:co deals-made)
-    "}"
-  %+  weld  "\{\"sessions\":["
-  %+  weld  (join-tapes session-jsons ",")
-  "]}"
+    ;:  weld
+      "\{\"gameId\":\""
+      (trip game-id)
+      "\",\"status\":\""
+      (scow %tas status)
+      "\",\"bank\":"
+      (a-co:co bank)
+      ",\"dealsMade\":"
+      (a-co:co deals-made)
+      "}"
+    ==
+  ;:  weld
+      "\{\"sessions\":["
+      (join-tapes session-jsons ",")
+      "]}"
+  ==
 ::
 ++  make-json-full-session
   |=  sess=session-state
   ^-  tape
-  %+  weld  "\{\"gameId\":\""
-  %+  weld  (trip game-id.sess)
-  %+  weld  "\",\"status\":\""
-  %+  weld  (scow %tas status.sess)
-  %+  weld  "\",\"playerPkh\":"
-  %+  weld  ?~(player-pkh.sess "null" (weld "\"" (weld (trip u.player-pkh.sess) "\"")))
-  %+  weld  ",\"bank\":"
-  %+  weld  (a-co:co bank.game.sess)
-  %+  weld  ",\"currentBet\":"
-  %+  weld  (a-co:co current-bet.game.sess)
-  %+  weld  ",\"dealsMade\":"
-  %+  weld  (a-co:co deals-made.game.sess)
-  %+  weld  ",\"gameInProgress\":"
-  %+  weld  ?:(game-in-progress.game.sess "true" "false")
-  %+  weld  ",\"playerHand\":"
-  %+  weld  ?:(=(~ player-hand.game.sess) "[]" (hand-to-json (snag 0 player-hand.game.sess)))
-  %+  weld  ",\"dealerHand\":"
-  %+  weld  ?:(=(~ dealer-hand.game.sess) "[]" (hand-to-json (snag 0 dealer-hand.game.sess)))
-  %+  weld  ",\"dealerTurn\":"
-  %+  weld  ?:(dealer-turn.game.sess "true" "false")
-  %+  weld  ",\"history\":"
-  %+  weld  (history-list-to-json history.sess)
-  "}"
+  ;:  weld
+    "\{\"gameId\":\""
+    (trip game-id.sess)
+    "\",\"status\":\""
+    (scow %tas status.sess)
+    "\",\"playerPkh\":"
+    ?~(player-pkh.sess "null" (weld "\"" (weld (trip u.player-pkh.sess) "\"")))
+    ",\"bank\":"
+    (a-co:co bank.game.sess)
+    ",\"currentBet\":"
+    (a-co:co current-bet.game.sess)
+    ",\"dealsMade\":"
+    (a-co:co deals-made.game.sess)
+    ",\"gameInProgress\":"
+    ?:(game-in-progress.game.sess "true" "false")
+    ",\"playerHand\":"
+    ?:(=(~ player-hand.game.sess) "[]" (hand-to-json (snag 0 player-hand.game.sess)))
+    ",\"dealerHand\":"
+    ?:(=(~ dealer-hand.game.sess) "[]" (hand-to-json (snag 0 dealer-hand.game.sess)))
+    ",\"dealerTurn\":"
+    ?:(dealer-turn.game.sess "true" "false")
+    ",\"history\":"
+    (history-list-to-json history.sess)
+    "}"
+  ==
 ::
 ++  parse-json-text
   |=  [key=tape json-text=tape]
@@ -565,24 +593,28 @@
   ^-  tape
   ?^  error
     ::  Error response
-    %+  weld  "\{\"success\":false,\"error\":\""
-    %+  weld  u.error
-    "\"}"
+    ;:  weld
+      "\{\"success\":false,\"error\":\""
+      u.error
+      "\"}"
+    ==
   ::  Success response
-  %+  weld  "\{\"success\":true"
-  %+  weld  ",\"gameId\":\""
-  %+  weld  (trip game-id)
-  %+  weld  "\",\"amount\":"
-  %+  weld  (a-co:co amount)
-  %+  weld  ",\"playerPkh\":\""
-  %+  weld  (trip player-pkh)
-  %+  weld  "\",\"newBank\":"
-  %+  weld  (a-co:co new-bank)
-  %+  weld  ",\"txReady\":"
-  %+  weld  ?:(tx-ready "true" "false")
-  %+  weld  ",\"message\":\""
-  %+  weld  ?:(tx-ready "Transaction built successfully - awaiting submission" "Transaction structure prepared")
-  "\"}"
+  ;:  weld
+    "\{\"success\":true"
+    ",\"gameId\":\""
+    (trip game-id)
+    "\",\"amount\":"
+    (a-co:co amount)
+    ",\"playerPkh\":\""
+    (trip player-pkh)
+    "\",\"newBank\":"
+    (a-co:co new-bank)
+    ",\"txReady\":"
+    ?:(tx-ready "true" "false")
+    ",\"message\":\""
+    ?:(tx-ready "Transaction built successfully - awaiting submission" "Transaction structure prepared")
+    "\"}"
+  ==
 ::
 +$  config-poke
   $:  %init-config

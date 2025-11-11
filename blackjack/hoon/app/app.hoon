@@ -39,11 +39,6 @@
       max-history-entries=20
       notes=~
   ==
---
-::  Application logic
-=>
-|%
-++  moat  (keep server-state)
 ::
 ::  Get config (either from state or default)
 ::
@@ -53,6 +48,11 @@
   ?~  config.state
     default-config
   u.config.state
+--
+::  Application logic
+=>
+|%
+++  moat  (keep server-state)
 ::
 ++  inner
   |_  state=server-state
@@ -143,7 +143,7 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'text/css']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
                 ['Pragma' 'no-cache']
@@ -159,7 +159,7 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'text/javascript']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
                 ['Pragma' 'no-cache']
@@ -174,13 +174,13 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'image/png']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
                 ['Pragma' 'no-cache']
                 ['Expires' '0']
             ==
-            sprites
+            (to-octs:http q.sprites)
         ==
         ::
           :: Serve watcher.html
@@ -189,7 +189,7 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'text/html']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -202,7 +202,7 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'text/javascript']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -215,7 +215,7 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'text/css']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -228,7 +228,7 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'text/html']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -241,7 +241,7 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'text/javascript']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -254,7 +254,7 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'text/css']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -278,7 +278,7 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'application/json']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -302,7 +302,7 @@
         :_  state
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'application/json']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -346,7 +346,7 @@
         :_  state(sessions (~(put by sessions.state) game-id new-session))
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'application/json']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -423,7 +423,7 @@
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'application/json']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -475,7 +475,7 @@
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'application/json']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -559,7 +559,7 @@
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'application/json']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -636,7 +636,7 @@
           :_  state(sessions (~(put by sessions.state) game-id final-session))
           :_  ~
           ^-  effect:http
-          :*  %res  id=id  %200
+          :*  %res  id  %200
               :~  ['Content-Type' 'application/json']
                   ['Cache-Control' 'no-cache, no-store, must-revalidate']
               ==
@@ -693,7 +693,7 @@
         :_  state(sessions (~(put by sessions.state) game-id final-session))
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'application/json']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
@@ -800,7 +800,7 @@
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
         :_  ~
         ^-  effect:http
-        :*  %res  id=id  %200
+        :*  %res  id  %200
             :~  ['Content-Type' 'application/json']
                 ['Cache-Control' 'no-cache, no-store, must-revalidate']
             ==
