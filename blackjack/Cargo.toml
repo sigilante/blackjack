@@ -12,11 +12,11 @@ path = "src/main.rs"
 [dependencies]
 # NockVM dependency
 nockapp = { git = "https://github.com/sigilante/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
-nockapp-grpc = { git = "https://github.com/zorp-corp/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
+nockapp-grpc = { git = "https://github.com/nockchain/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
 nockvm = { git = "https://github.com/sigilante/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
 nockvm_macros = { git = "https://github.com/sigilante/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
-zkvm-jetpack = { git = "https://github.com/zorp-corp/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
-kernels = { git = "https://github.com/zorp-corp/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
+zkvm-jetpack = { git = "https://github.com/nockchain/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
+kernels = { git = "https://github.com/nockchain/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
 
 # Common dependencies for NockApps
 serde = { version = "1.0", features = ["derive"] }

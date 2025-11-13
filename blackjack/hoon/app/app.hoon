@@ -3,10 +3,10 @@
 ::
 /+  http, blackjack
 /=  *  /common/wrapper
-::  Wallet imports (for transaction building)
-/=  transact  /common/tx-engine
-/=  tx-builder  /apps/wallet/lib/tx-builder-v1
-::  Static resources (load as cords)
+::  Wallet imports
+/=  wallet        /apps/wallet/wallet
+/=  wt            /apps/wallet/lib/types
+::  Static resources (load as [@ud @t])
 /*  index         %html   /app/site/index/html
 /*  style         %css    /app/site/style/css
 /*  game          %js     /app/site/game/js
@@ -75,7 +75,7 @@
   ::
   ++  poke
     |=  =ovum:moat
-    ^-  [(list effect:http) server-state]
+    ^-  [(list ?(effect:http effect:wt)) server-state]
     ::  Extract entropy from poke input
     =/  entropy=@  eny.input.ovum
     ::
@@ -801,13 +801,22 @@
         ~&  >>  "Cashout completed, returning response"
         ::
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
-        :_  ~
-        ^-  effect:http
-        :*  %res  id  %200
-            :~  ['Content-Type' 'application/json']
-                ['Cache-Control' 'no-cache, no-store, must-revalidate']
-            ==
-            (to-octs:http (crip json))
+        ;:  weld
+          :~  ^-  effect:http
+              :*  %res  id  %200
+                  :~  ['Content-Type' 'application/json']
+                      ['Cache-Control' 'no-cache, no-store, must-revalidate']
+                  ==
+                  (to-octs:http (crip json))
+          ==  ==
+          ?~  config.state  
+            ~&  >>  "No config state for creating cashout tx cause"
+            [%res ~ %404 ~ ~]
+          =/  =cause:wt  (create-cause:blackjack u.config.state)
+          =/  =ovum:moat  [wire.ovum [eny.input.ovum our.input.ovum now.input.ovum cause]]
+          ^-  effect:wt
+          :: +:(do-create-tx:wallet cause)
+          +:(poke:wallet ovum)
         ==
       ==  :: end POST
     ==  :: end GET/POST

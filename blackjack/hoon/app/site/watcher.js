@@ -74,7 +74,7 @@ async function refreshSessions() {
             console.log('Adding session:', session);
             const option = document.createElement('option');
             option.value = session.gameId;
-            option.textContent = `${session.gameId.substring(0, 8)}... (${session.status}, $${session.bank}, ${session.dealsMade} deals)`;
+            option.textContent = `${session.gameId.substring(0, 8)}... (${session.status}, ℕ${session.bank}, ${session.dealsMade} deals)`;
             selector.appendChild(option);
         });
 
@@ -125,8 +125,8 @@ async function loadSession(gameId) {
         // Update info displays
         document.getElementById('game-id-display').textContent = gameId.substring(0, 12) + '...';
         document.getElementById('status-display').textContent = session.status;
-        document.getElementById('bank-amount').textContent = `$${session.bank}`;
-        document.getElementById('current-bet').textContent = `$${session.currentBet}`;
+        document.getElementById('bank-amount').textContent = `ℕ${session.bank}`;
+        document.getElementById('current-bet').textContent = `ℕ${session.currentBet}`;
 
         // Update hands
         updateHand('player', session.playerHand || [], true);  // Always show all player cards
@@ -243,11 +243,11 @@ function updateHistory(history) {
 
         const bet = document.createElement('span');
         bet.className = 'history-bet';
-        bet.textContent = `Bet: $${entry.bet}`;
+        bet.textContent = `Bet: ℕ${entry.bet}`;
 
         const payout = document.createElement('span');
         payout.className = 'history-payout';
-        payout.textContent = `Payout: $${entry.payout}`;
+        payout.textContent = `Payout: ℕ${entry.payout}`;
 
         header.appendChild(handNumber);
         header.appendChild(outcome);

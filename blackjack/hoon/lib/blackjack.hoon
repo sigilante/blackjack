@@ -1,6 +1,12 @@
 ::  blackjack/lib/blackjack-static.hoon
 ::
+/+  tx
+::
 /=  ztd  /common/ztd/three
+::  Wallet imports (for transaction building)
+/=  transact      /common/tx-engine
+/=  tx-builder    /apps/wallet/lib/tx-builder-v1
+/=  wt            /apps/wallet/lib/types
 ::
 ::  blackjack/sur/blackjack.hoon
 ::  Data structures for blackjack game
@@ -596,6 +602,16 @@
     [i.remaining $(remaining t.remaining)]
   ?~  text  ~
   `(crip text)
+::
+++  make cashout-tx-effect
+  |=  [src-pkh=@ trg-pkh=@ amount=@]
+  ^-  tx-effect:tx
+  :*  %tx
+      %send
+      src_pkh=src-pkh
+      trg_pkh=trg-pkh
+      amount=amount
+  ==
 ::
 ++  make-json-cashout-tx
   |=  [game-id=@t amount=@ud player-pkh=@t new-bank=@ud tx-ready=? error=(unit tape)]

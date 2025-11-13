@@ -88,7 +88,7 @@ async function initGame() {
 
                 updateDisplay();
                 updateSessionInfo();
-                setStatus(`Resumed session ${gameId.substring(0, 8)}... (Bank: $${gameState.bank})`);
+                setStatus(`Resumed session ${gameId.substring(0, 8)}... (Bank: ℕ${gameState.bank})`);
                 return;
             } else {
                 // Session no longer exists, clear it
@@ -278,9 +278,9 @@ document.addEventListener('mouseup', function(e) {
 // Update the display
 function updateDisplay() {
     // Update bank and bet displays
-    document.getElementById('bank-amount').textContent = `$${gameState.bank}`;
-    document.getElementById('current-bet').textContent = `$${gameState.currentBet}`;
-    document.getElementById('win-loss').textContent = `$${gameState.winLoss >= 0 ? '+' : ''}${gameState.winLoss}`;
+    document.getElementById('bank-amount').textContent = `ℕ${gameState.bank}`;
+    document.getElementById('current-bet').textContent = `ℕ${gameState.currentBet}`;
+    document.getElementById('win-loss').textContent = `ℕ${gameState.winLoss >= 0 ? '+' : ''}${gameState.winLoss}`;
 
     // Update bet display
     updateBetDisplay();
@@ -389,7 +389,7 @@ function placeBet(amount) {
         document.getElementById('deal-btn').disabled = false;
     }
 
-    setStatus(`Bet placed: $${gameState.currentBet}`);
+    setStatus(`Bet placed: ℕ${gameState.currentBet}`);
 }
 
 // Clear the current bet
@@ -662,7 +662,7 @@ async function stand() {
 
         // Display outcome
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
-        setStatus(`${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
+        setStatus(`${outcomeMessage}! Payout: ℕ${data.payout}. Place a bet to play again.`);
 
         // Reset for next round - clear bet but keep hands visible
         gameState.gameInProgress = false;
@@ -732,7 +732,7 @@ async function doubleDown() {
 
         // Display outcome
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
-        setStatus(`Doubled down! ${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
+        setStatus(`Doubled down! ${outcomeMessage}! Payout: ℕ${data.payout}. Place a bet to play again.`);
 
         // Reset for next round - clear bet but keep hands visible
         gameState.gameInProgress = false;
@@ -798,7 +798,7 @@ function surrender() {
     gameState.winLoss -= halfBet;
 
     updateDisplay();
-    endRound(`Surrendered. Lost $${halfBet}.`);
+    endRound(`Surrendered. Lost ℕ${halfBet}.`);
 }
 
 // Dealer plays according to rules
