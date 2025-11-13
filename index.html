@@ -12,23 +12,26 @@
         <!-- Menu Bar -->
         <div class="menu-bar">
             <div class="menu-item">Game</div>
+            <div class="menu-item" onclick="window.location.href='/blackjack/wallet.html'">Wallet</div>
+            <div class="menu-item" onclick="window.location.href='/blackjack/watcher.html'">Watcher</div>
             <div class="menu-item">Help</div>
         </div>
 
         <!-- Toolbar -->
         <div class="toolbar">
-            <button class="toolbar-btn" id="new-game-btn" onclick="startNewGame()">New Game</button>
+            <button class="toolbar-btn" id="new-game-btn" onclick="startNewGame()">New Session</button>
+            <span id="session-info" style="margin-left: 12px; font-size: 11px; color: #666;"></span>
         </div>
 
         <!-- Game Info -->
         <div class="game-info">
             <div class="info-section">
                 <span class="info-label">Bank:</span>
-                <span id="bank-amount" class="info-value">$1000</span>
+                <span id="bank-amount" class="info-value">ℕ1000</span>
             </div>
             <div class="info-section">
                 <span class="info-label">Win/Loss:</span>
-                <span id="win-loss" class="info-value">$0</span>
+                <span id="win-loss" class="info-value">ℕ0</span>
             </div>
         </div>
 
@@ -57,7 +60,7 @@
             <!-- Betting Area -->
             <div class="betting-area">
                 <div class="betting-label">Place Your Bet:</div>
-                <div class="bet-amount-display" id="current-bet">$0</div>
+                <div class="bet-amount-display" id="current-bet">ℕ0</div>
                 <div class="bet-display-container">
                     <div class="bet-display" id="bet-display">
                         <!-- Bet chips will be displayed here -->
@@ -65,22 +68,22 @@
                 </div>
                 <div class="chips-container" id="chips-container">
                     <button class="chip chip-1" onclick="placeBet(1)" data-value="1">
-                        <span class="chip-value">$1</span>
+                        <span class="chip-value">ℕ1</span>
                     </button>
                     <button class="chip chip-5" onclick="placeBet(5)" data-value="5">
-                        <span class="chip-value">$5</span>
+                        <span class="chip-value">ℕ5</span>
                     </button>
                     <button class="chip chip-10" onclick="placeBet(10)" data-value="10">
-                        <span class="chip-value">$10</span>
+                        <span class="chip-value">ℕ10</span>
                     </button>
                     <button class="chip chip-25" onclick="placeBet(25)" data-value="25">
-                        <span class="chip-value">$25</span>
+                        <span class="chip-value">ℕ25</span>
                     </button>
                     <button class="chip chip-50" onclick="placeBet(50)" data-value="50">
-                        <span class="chip-value">$50</span>
+                        <span class="chip-value">ℕ50</span>
                     </button>
                     <button class="chip chip-100" onclick="placeBet(100)" data-value="100">
-                        <span class="chip-value">$100</span>
+                        <span class="chip-value">ℕ100</span>
                     </button>
                 </div>
                 <button class="bet-btn" onclick="clearBet()">Clear Bet</button>

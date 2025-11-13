@@ -1,5 +1,6 @@
 // Server session tracking
-let sessionId = null;
+let gameId = null;
+let serverWalletPkh = null;
 
 // Game State
 const gameState = {
@@ -33,8 +34,75 @@ const rankValues = {
 };
 
 // Initialize the game
-function initGame() {
+async function initGame() {
+    // Try to restore previous session from localStorage
+    const savedGameId = localStorage.getItem('blackjack-gameId');
+    const savedServerPkh = localStorage.getItem('blackjack-serverPkh');
+
+    if (savedServerPkh) {
+        serverWalletPkh = savedServerPkh;
+    }
+
+    if (savedGameId) {
+        try {
+            console.log('Attempting to restore session:', savedGameId);
+            // Try to restore the session
+            const response = await fetch(`/blackjack/api/${savedGameId}/status`);
+            console.log('Restore response status:', response.status);
+            if (response.ok) {
+                const session = await response.json();
+                console.log('Session data:', session);
+                // Restore session
+                gameId = savedGameId;
+                gameState.bank = session.bank;
+                gameState.currentBet = session.currentBet;
+                gameState.gameInProgress = session.gameInProgress;
+                gameState.playerHand = session.playerHand || [];
+                gameState.dealerHand = session.dealerHand || [];
+                gameState.dealerTurn = session.dealerTurn;
+                gameState.winLoss = session.winLoss || 0;
+
+                console.log('Restored gameState:', {
+                    bank: gameState.bank,
+                    currentBet: gameState.currentBet,
+                    gameInProgress: gameState.gameInProgress,
+                    dealerTurn: gameState.dealerTurn,
+                    playerHandLength: gameState.playerHand.length,
+                    dealerHandLength: gameState.dealerHand.length,
+                    winLoss: gameState.winLoss
+                });
+
+                // Update button states based on game state
+                console.log('Setting button states...');
+                if (gameState.gameInProgress) {
+                    console.log('Game in progress - enabling Hit/Stand, disabling Deal');
+                    document.getElementById('hit-btn').disabled = false;
+                    document.getElementById('stand-btn').disabled = false;
+                    document.getElementById('deal-btn').disabled = true;
+                } else if (gameState.currentBet > 0) {
+                    console.log('Bet placed but no game - enabling Deal');
+                    document.getElementById('deal-btn').disabled = false;
+                } else {
+                    console.log('No bet, no game - all buttons should be disabled or in default state');
+                }
+
+                updateDisplay();
+                updateSessionInfo();
+                setStatus(`Resumed session ${gameId.substring(0, 8)}... (Bank: ℕ${gameState.bank})`);
+                return;
+            } else {
+                // Session no longer exists, clear it
+                localStorage.removeItem('blackjack-gameId');
+            }
+        } catch (error) {
+            console.error('Error restoring session:', error);
+            localStorage.removeItem('blackjack-gameId');
+        }
+    }
+
+    // No saved session or restore failed
     updateDisplay();
+    setStatus('Welcome! Click "New Game" or place a bet to start playing.');
 }
 
 // Create and shuffle a deck
@@ -210,9 +278,9 @@ document.addEventListener('mouseup', function(e) {
 // Update the display
 function updateDisplay() {
     // Update bank and bet displays
-    document.getElementById('bank-amount').textContent = `$${gameState.bank}`;
-    document.getElementById('current-bet').textContent = `$${gameState.currentBet}`;
-    document.getElementById('win-loss').textContent = `$${gameState.winLoss >= 0 ? '+' : ''}${gameState.winLoss}`;
+    document.getElementById('bank-amount').textContent = `ℕ${gameState.bank}`;
+    document.getElementById('current-bet').textContent = `ℕ${gameState.currentBet}`;
+    document.getElementById('win-loss').textContent = `ℕ${gameState.winLoss >= 0 ? '+' : ''}${gameState.winLoss}`;
 
     // Update bet display
     updateBetDisplay();
@@ -321,7 +389,7 @@ function placeBet(amount) {
         document.getElementById('deal-btn').disabled = false;
     }
 
-    setStatus(`Bet placed: $${gameState.currentBet}`);
+    setStatus(`Bet placed: ℕ${gameState.currentBet}`);
 }
 
 // Clear the current bet
@@ -341,9 +409,10 @@ function clearBet() {
 async function startNewGame() {
     try {
         // Call server API to create new session
-        const response = await fetch('/blackjack/api/new-game', {
+        const response = await fetch('/blackjack/api/session/create', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'}
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
         });
 
         if (!response.ok) {
@@ -353,10 +422,16 @@ async function startNewGame() {
         const data = await response.json();
 
         // Update session and game state from server
-        sessionId = data.sessionId;
-        gameState.bank = data.bank;
+        gameId = data.gameId;
+        serverWalletPkh = data.serverWalletPkh;
+
+        // Save to localStorage for persistence
+        localStorage.setItem('blackjack-gameId', gameId);
+        localStorage.setItem('blackjack-serverPkh', serverWalletPkh);
+
+        gameState.bank = data.bank;  // Initial bank from server
         gameState.currentBet = 0;
-        gameState.winLoss = 0;
+        gameState.winLoss = data.winLoss;
         gameState.gameInProgress = false;
         gameState.dealerTurn = false;
         gameState.playerHand = [];
@@ -371,7 +446,8 @@ async function startNewGame() {
         document.getElementById('surrender-btn').disabled = true;
 
         updateDisplay();
-        setStatus(`New game started (Session: ${sessionId}). Place your bet and click Deal.`);
+        updateSessionInfo();
+        setStatus(`New session created (${gameId.substring(0, 8)}...). Place your bet and click Deal.`);
     } catch (error) {
         console.error('Error starting new game:', error);
         setStatus('Error connecting to server: ' + error.message);
@@ -391,8 +467,13 @@ async function dealHand() {
     }
 
     // Create session if needed
-    if (!sessionId) {
+    if (!gameId) {
+        // Save the current bet before creating session (startNewGame resets state)
+        const savedBet = gameState.currentBet;
         await startNewGame();
+        // Restore the bet after session creation
+        gameState.currentBet = savedBet;
+        updateDisplay();
     }
 
     // Optimistically update bank immediately for instant visual feedback
@@ -402,11 +483,10 @@ async function dealHand() {
 
     try {
         // Call server API to deal
-        const response = await fetch('/blackjack/api/deal', {
+        const response = await fetch(`/blackjack/api/${gameId}/deal`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                sessionId: sessionId,
                 bet: betAmount
             })
         });
@@ -422,6 +502,7 @@ async function dealHand() {
         gameState.gameInProgress = true;
         gameState.dealerTurn = false;
         gameState.bank = data.bank;  // Sync to server's bank (should match our optimistic update)
+        gameState.winLoss = data.winLoss || 0;  // Sync win/loss from server
 
         // Parse hands from server response
         // Server returns hands as arrays of cards directly
@@ -485,16 +566,24 @@ async function hit() {
 
     try {
         // Call server API to hit
-        const response = await fetch('/blackjack/api/hit', {
+        const response = await fetch(`/blackjack/api/${gameId}/hit`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                sessionId: sessionId
-            })
+            headers: {'Content-Type': 'application/json'}
         });
 
         if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
+            // Try to get error details from response
+            let errorMessage = `Server error: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                console.error('Hit endpoint error response:', errorData);
+                if (errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            } catch (e) {
+                console.error('Could not parse error response');
+            }
+            throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -503,14 +592,13 @@ async function hit() {
         // Update player hand and bank from server
         gameState.playerHand = data.hand;
         gameState.bank = data.bank;
+        gameState.winLoss = data.winLoss || 0;  // Sync win/loss from server
         updateDisplay();
 
         const playerValue = calculateHandValue(gameState.playerHand);
 
         if (data.busted) {
             // Bust - bank already updated from server, clear bet but keep hands visible
-            // Update win/loss tracking - busting means losing the bet
-            gameState.winLoss -= gameState.currentBet;
 
             gameState.dealerTurn = true;
             gameState.gameInProgress = false;
@@ -553,12 +641,9 @@ async function stand() {
 
     try {
         // Call server API to stand (dealer plays and resolves)
-        const response = await fetch('/blackjack/api/stand', {
+        const response = await fetch(`/blackjack/api/${gameId}/stand`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                sessionId: sessionId
-            })
+            headers: {'Content-Type': 'application/json'}
         });
 
         if (!response.ok) {
@@ -571,18 +656,13 @@ async function stand() {
         // Update dealer hand and bank from server
         gameState.dealerHand = data.dealerHand;
         gameState.bank = data.bank;
-
-        // Update win/loss tracking based on outcome
-        // Payout includes original bet, so profit = payout - bet
-        const betAmount = gameState.currentBet;
-        const profit = data.payout - betAmount;
-        gameState.winLoss += profit;
+        gameState.winLoss = data.winLoss || 0;  // Sync win/loss from server
 
         updateDisplay();
 
         // Display outcome
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
-        setStatus(`${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
+        setStatus(`${outcomeMessage}! Payout: ℕ${data.payout}. Place a bet to play again.`);
 
         // Reset for next round - clear bet but keep hands visible
         gameState.gameInProgress = false;
@@ -630,12 +710,9 @@ async function doubleDown() {
 
     try {
         // Call server API to double down
-        const response = await fetch('/blackjack/api/double', {
+        const response = await fetch(`/blackjack/api/${gameId}/double`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                sessionId: sessionId
-            })
+            headers: {'Content-Type': 'application/json'}
         });
 
         if (!response.ok) {
@@ -649,18 +726,13 @@ async function doubleDown() {
         gameState.playerHand = data.playerHand || gameState.playerHand;
         gameState.dealerHand = data.dealerHand;
         gameState.bank = data.bank;
-
-        // Update win/loss tracking for doubled bet
-        // When doubling down, the total bet is 2x the original
-        const totalBet = gameState.currentBet * 2;
-        const profit = data.payout - totalBet;
-        gameState.winLoss += profit;
+        gameState.winLoss = data.winLoss || 0;  // Sync win/loss from server
 
         updateDisplay();
 
         // Display outcome
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
-        setStatus(`Doubled down! ${outcomeMessage}! Payout: $${data.payout}. Place a bet to play again.`);
+        setStatus(`Doubled down! ${outcomeMessage}! Payout: ℕ${data.payout}. Place a bet to play again.`);
 
         // Reset for next round - clear bet but keep hands visible
         gameState.gameInProgress = false;
@@ -726,7 +798,7 @@ function surrender() {
     gameState.winLoss -= halfBet;
 
     updateDisplay();
-    endRound(`Surrendered. Lost $${halfBet}.`);
+    endRound(`Surrendered. Lost ℕ${halfBet}.`);
 }
 
 // Dealer plays according to rules
@@ -808,6 +880,16 @@ function endRound(message) {
 // Set status message
 function setStatus(message) {
     document.getElementById('status-message').textContent = message;
+}
+
+// Update session info display
+function updateSessionInfo() {
+    const sessionInfoEl = document.getElementById('session-info');
+    if (gameId) {
+        sessionInfoEl.textContent = `Session: ${gameId.substring(0, 12)}...`;
+    } else {
+        sessionInfoEl.textContent = '';
+    }
 }
 
 // Initialize on page load

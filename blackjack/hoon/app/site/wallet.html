@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blackjack - Wallet</title>
+    <link rel="stylesheet" href="/blackjack/style.css">
+    <link rel="stylesheet" href="/blackjack/wallet.css">
+</head>
+<body>
+    <div class="window">
+        <!-- Menu Bar -->
+        <div class="menu-bar">
+            <div class="menu-item" onclick="window.location.href='/blackjack'">Game</div>
+            <div class="menu-item">Wallet</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="wallet-container">
+            <div class="wallet-section">
+                <div class="section-title">Server Wallet</div>
+                <div class="form-group">
+                    <label>Server PKH (Send funds to):</label>
+                    <div class="pkh-display" id="server-pkh">Loading...</div>
+                    <button class="btn-copy" onclick="copyServerPkh()">Copy</button>
+                </div>
+            </div>
+
+            <div class="wallet-section">
+                <div class="section-title">Your Wallet</div>
+                <div class="form-group">
+                    <label>Available Balance:</label>
+                    <div class="balance-display" id="available-balance">ℕ0</div>
+                </div>
+                <div class="form-group">
+                    <label>Active Betting Pool:</label>
+                    <div class="balance-display" id="betting-pool">ℕ0</div>
+                </div>
+            </div>
+
+            <div class="wallet-section">
+                <div class="section-title">Add Funds</div>
+                <div class="instructions">
+                    <p>To add funds to your game balance, send Nockchain tokens to the server PKH above.</p>
+                    <p>After sending, your funds will be available once the transaction confirms (3 blocks).</p>
+                </div>
+                <div class="form-group">
+                    <label>Your PKH (for reference):</label>
+                    <input type="text" class="text-input" id="player-pkh-input" placeholder="Enter your PKH...">
+                </div>
+                <div class="form-group">
+                    <label>Your Private Key:</label>
+                    <input type="password" class="text-input" id="player-private-key" placeholder="Enter your private key...">
+                    <small style="color: #666; font-size: 10px; display: block; margin-top: 4px;">
+                        ⚠️ In mock mode - not used for actual signing
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Amount to send:</label>
+                    <input type="number" class="text-input" id="send-amount" placeholder="0" min="1">
+                </div>
+                <button class="btn-primary" onclick="mockSendFunds()">Send Funds (Mock)</button>
+            </div>
+
+            <div class="wallet-section">
+                <div class="section-title">Cash Out</div>
+                <div class="instructions">
+                    <p>Withdraw your funds from the server back to your wallet.</p>
+                </div>
+                <div class="form-group">
+                    <label>Destination PKH:</label>
+                    <input type="text" class="text-input" id="cashout-pkh" placeholder="Enter destination PKH...">
+                </div>
+                <div class="form-group">
+                    <label>Amount to withdraw:</label>
+                    <input type="number" class="text-input" id="cashout-amount" placeholder="0" min="1">
+                </div>
+                <button class="btn-primary" onclick="mockCashOut()">Cash Out (Mock)</button>
+            </div>
+
+            <div class="wallet-section">
+                <div class="section-title">Transaction History</div>
+                <div class="transaction-list" id="transaction-list">
+                    <div class="no-transactions">No transactions yet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div id="status-message">Wallet management (Mock mode - no real blockchain transactions)</div>
+        </div>
+    </div>
+
+    <script src="/blackjack/wallet.js"></script>
+</body>
+</html>

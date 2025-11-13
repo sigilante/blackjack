@@ -1,6 +1,12 @@
 ::  blackjack/lib/blackjack-static.hoon
 ::
+/+  tx
+::
 /=  ztd  /common/ztd/three
+::  Wallet imports (for transaction building)
+/=  transact      /common/tx-engine
+/=  tx-builder    /apps/wallet/lib/tx-builder-v1
+/=  wt            /apps/wallet/lib/types
 ::
 ::  blackjack/sur/blackjack.hoon
 ::  Data structures for blackjack game
@@ -17,18 +23,81 @@
 ::  Hand of cards
 +$  hand  (list card)  :: could plausibly be a (set card)
 ::
-::  Game state
-+$  session-id  @ud
+::  Session and game state
++$  game-id  @t  :: UUID-style identifier
++$  session-id  @ud  :: Old style, kept for compatibility
 ::
-+$  game-state
++$  bet-status
+  $?  %pending      :: Transaction submitted, waiting for confirmations
+      %confirmed    :: Transaction has required confirmations
+      %failed       :: Transaction failed or invalid
+  ==
+::
++$  session-status
+  $?  %awaiting-bet    :: Session created, waiting for bet transaction
+      %bet-pending     :: Bet transaction seen, waiting for confirmations
+      %active          :: Bet confirmed, game in progress
+      %ended           :: Game ended, waiting for payout
+      %paid-out        :: Payout transaction broadcast
+      %closed          :: Session closed
+  ==
+::
++$  hand-history
+  $:  bet=@ud
+      player-hand=hand
+      dealer-hand=hand
+      outcome=?(%win %loss %push %blackjack)
+      payout=@ud
+      bank-after=@ud            :: Bank balance after this hand
+      timestamp=@da
+  ==
+::
++$  session-state
+  $:  game-id=@t
+      player-pkh=(unit @t)        :: Player's public key hash
+      bet-tx-hash=(unit @t)       :: Transaction hash of initial bet
+      bet-status=bet-status       :: Status of bet transaction
+      confirmed-amount=@ud        :: Amount confirmed on-chain (0 if pending)
+      game=game-state-inner       :: Actual game state
+      created=@da
+      last-activity=@da
+      status=session-status
+      history=(list hand-history) :: Last N hands played
+  ==
+::
++$  game-state-inner
   $:  deck=(list card)
       player-hand=(list hand)  :: list for splitting hands
       dealer-hand=(list hand)
       bank=@ud
       current-bet=@ud
       win-loss=@sd
+      deals-made=@ud           :: Track number of deals
       game-in-progress=?
       dealer-turn=?
+  ==
+::
+:: Old game-state type for backward compatibility
++$  game-state  game-state-inner
+::
++$  server-config
+  $:  wallet-pkh=@t                :: Server's PKH from config
+      confirmation-blocks=@ud      :: Required confirmations (typically 3)
+      enable-blockchain=?          :: Toggle blockchain integration
+      initial-bank=@ud             :: Initial bank for new sessions (default 1000)
+      max-history-entries=@ud      :: Maximum history entries to keep (default 20)
+  ==
+::
+::  Runtime server configuration (includes keys and notes)
+::  This gets poked in from Rust driver on startup
++$  runtime-config
+  $:  wallet-pkh=@t                        :: Server's wallet PKH
+      private-key=(unit @t)                :: Server's private key (base58)
+      confirmation-blocks=@ud              :: Required confirmations
+      enable-blockchain=?                  :: Blockchain integration enabled
+      initial-bank=@ud                     :: Initial bank amount
+      max-history-entries=@ud              :: Max history entries
+      notes=(map @t *)                     :: Server's UTXOs (note name -> note data)
   ==
 --
 ::  Game mechanics
@@ -223,14 +292,16 @@
 ++  make-json-new-game
   |=  [sid=@ud bank=@ud]
   ^-  tape
-  %+  weld  "\{\"sessionId\":"
-  %+  weld  (a-co:co sid)
-  %+  weld  ",\"bank\":"
-  %+  weld  (a-co:co bank)
-  "}"
+  ;:  weld
+    "\{\"sessionId\":"
+    (a-co:co sid)
+    ",\"bank\":"
+    (a-co:co bank)
+    "}"
+  ==
 ::
 ++  make-json-deal
-  |=  [player=(list hand) dealer=(list hand) score=@ud visible=card sid=@ud bank=@ud]
+  |=  [player=(list hand) dealer=(list hand) score=@ud visible=card sid=@ud bank=@ud win-loss=@sd]
   ^-  tape
   ;:  weld
     "\{\"playerHand\":"
@@ -245,53 +316,339 @@
     (a-co:co sid)
     ",\"bank\":"
     (a-co:co bank)
+    ",\"winLoss\":"
+    (a-co:co win-loss)
   "}"
   ==
 ::
 ++  make-json-hit
-  |=  [new-card=card hand=hand score=@ud busted=? bank=@ud]
+  |=  [new-card=card hand=hand score=@ud busted=? bank=@ud win-loss=@sd]
   ^-  tape
-  %+  weld  "\{\"newCard\":"
-  %+  weld  (card-to-json new-card)
-  %+  weld  ",\"hand\":"
-  %+  weld  (hand-to-json hand)
-  %+  weld  ",\"score\":"
-  %+  weld  (a-co:co score)
-  %+  weld  ",\"busted\":"
-  %+  weld  ?:(busted "true" "false")
-  %+  weld  ",\"bank\":"
-  %+  weld  (a-co:co bank)
-  "}"
+  ;:  weld
+    "\{\"newCard\":"
+    (card-to-json new-card)
+    ",\"hand\":"
+    (hand-to-json hand)
+    ",\"score\":"
+    (a-co:co score)
+    ",\"busted\":"
+    ?:(busted "true" "false")
+    ",\"bank\":"
+    (a-co:co bank)
+    ",\"winLoss\":"
+    (a-co:co win-loss)
+    "}"
+  ==
 ::
 ++  make-json-stand
-  |=  [dealer=hand score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud]
+  |=  [dealer=hand score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud win-loss=@sd]
   ^-  tape
-  %+  weld  "\{\"dealerHand\":"
-  %+  weld  (hand-to-json dealer)
-  %+  weld  ",\"dealerScore\":"
-  %+  weld  (a-co:co score)
-  %+  weld  ",\"outcome\":\""
-  %+  weld  (scow %tas outcome)
-  %+  weld  "\",\"payout\":"
-  %+  weld  (a-co:co payout)
-  %+  weld  ",\"bank\":"
-  %+  weld  (a-co:co bank)
-  "}"
+  ;:  weld
+    "\{\"dealerHand\":"
+    (hand-to-json dealer)
+    ",\"dealerScore\":"
+    (a-co:co score)
+    ",\"outcome\":\""
+    (scow %tas outcome)
+    "\",\"payout\":"
+    (a-co:co payout)
+    ",\"bank\":"
+    (a-co:co bank)
+    ",\"winLoss\":"
+    (a-co:co win-loss)
+    "}"
+  ==
 ::
 ++  make-json-double
-  |=  [player=hand dealer=hand dealer-score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud]
+  |=  [player=hand dealer=hand dealer-score=@ud outcome=?(%win %loss %push %blackjack) payout=@ud bank=@ud win-loss=@sd]
   ^-  tape
-  %+  weld  "\{\"playerHand\":"
-  %+  weld  (hand-to-json player)
-  %+  weld  ",\"dealerHand\":"
-  %+  weld  (hand-to-json dealer)
-  %+  weld  ",\"dealerScore\":"
-  %+  weld  (a-co:co dealer-score)
-  %+  weld  ",\"outcome\":\""
-  %+  weld  (scow %tas outcome)
-  %+  weld  "\",\"payout\":"
-  %+  weld  (a-co:co payout)
-  %+  weld  ",\"bank\":"
-  %+  weld  (a-co:co bank)
-  "}"
+  ;:  weld
+    "\{\"playerHand\":"
+    (hand-to-json player)
+    ",\"dealerHand\":"
+    (hand-to-json dealer)
+    ",\"dealerScore\":"
+    (a-co:co dealer-score)
+    ",\"outcome\":\""
+    (scow %tas outcome)
+    "\",\"payout\":"
+    (a-co:co payout)
+    ",\"bank\":"
+    (a-co:co bank)
+    ",\"winLoss\":"
+    (a-co:co win-loss)
+    "}"
+  ==
+::
+::  Session management helpers
+++  generate-uuid
+  |=  ent=@
+  ^-  @t
+  ::  Generate UUID-style identifier using entropy
+  =/  hex=tape  (scow %ux ent)
+  =/  uuid=tape
+    ;:  weld
+      (scag 8 hex)
+      "-"
+      (scag 4 (slag 8 hex))
+      "-"
+      (scag 12 (slag 12 hex))
+    ==
+  (crip uuid)
+::
+++  initial-game-state
+  |=  initial-bank=@ud
+  ^-  game-state-inner
+  :*  deck=~
+      player-hand=~
+      dealer-hand=~
+      bank=initial-bank
+      current-bet=0
+      win-loss=--0
+      deals-made=0
+      game-in-progress=%.n
+      dealer-turn=%.n
+  ==
+::
+++  make-json-session-created
+  |=  [game-id=@t server-pkh=@t bank=@ud]
+  ^-  tape
+  ;:  weld
+    "\{\"gameId\":\""
+    (trip game-id)
+    "\",\"serverWalletPkh\":\""
+    (trip server-pkh)
+    "\",\"bank\":"
+    (a-co:co bank)
+    "}"
+  ==
+::
+++  make-json-session-status
+  |=  [game-id=@t status=session-status player-pkh=(unit @t) bank=@ud]
+  ^-  tape
+  ;:  weld
+    "\{\"gameId\":\""
+    (trip game-id)
+    "\",\"status\":\""
+    (scow %tas status)
+    "\",\"playerPkh\":"
+    ?~(player-pkh "null" (weld "\"" (weld (trip u.player-pkh) "\"")))
+    ",\"bank\":"
+    (a-co:co bank)
+    "}"
+  ==
+::
+++  make-json-error
+  |=  [code=@ud message=tape]
+  ^-  tape
+  ;:  weld
+    "\{\"error\":\""
+    message
+    "\",\"code\":"
+    (a-co:co code)
+    "}"
+  ==
+::
+++  append-to-history
+  |=  [new-entry=hand-history old-history=(list hand-history) max-entries=@ud]
+  ^-  (list hand-history)
+  ::  Prepend new entry and keep last N entries
+  (scag max-entries `(list hand-history)`[new-entry old-history])
+::
+++  validate-game-action
+  |=  [action=?(%hit %stand %double %deal) sess=session-state]
+  ^-  (unit tape)
+  ::  Returns error message if invalid, ~ if valid
+  =/  game=game-state-inner  game.sess
+  ?-  action
+    %deal
+      ?:  game-in-progress.game
+        `"Cannot deal while game is in progress"
+      ::  For now, allow dealing without blockchain confirmation
+      ::  This will be enforced when enable-blockchain=%.y
+      ~
+    %hit
+      ?:  |(=(%.n game-in-progress.game) dealer-turn.game)
+        `"Cannot hit - not player's turn"
+      ~
+    %stand
+      ?:  |(=(%.n game-in-progress.game) dealer-turn.game)
+        `"Cannot stand - not player's turn"
+      ~
+    %double
+      ?:  |(=(%.n game-in-progress.game) dealer-turn.game)
+        `"Cannot double - not player's turn"
+      ::  Check if player has exactly 2 cards (first turn only)
+      ?:  !=(2 (lent (snag 0 player-hand.game)))
+        `"Can only double on first two cards"
+      ~
+  ==
+::
+++  hand-history-to-json
+  |=  hist=hand-history
+  ^-  tape
+  ;:  weld
+    "\{\"bet\":"
+    (a-co:co bet.hist)
+    ",\"playerHand\":"
+    (hand-to-json player-hand.hist)
+    ",\"dealerHand\":"
+    (hand-to-json dealer-hand.hist)
+    ",\"outcome\":\""
+    (scow %tas outcome.hist)
+    "\",\"payout\":"
+    (a-co:co payout.hist)
+    ",\"bankAfter\":"
+    (a-co:co bank-after.hist)
+    "}"
+  ==
+::
+++  history-list-to-json
+  |=  history=(list hand-history)
+  ^-  tape
+  ?~  history
+    "[]"
+  =/  json-items=(list tape)
+    %+  turn  history
+    |=(hist=hand-history (hand-history-to-json hist))
+    ;:  weld
+      "["
+      (join-tapes json-items ",")
+      "]"
+    ==
+::
+++  join-tapes
+  |=  [items=(list tape) separator=tape]
+  ^-  tape
+  ?~  items  ""
+  ?~  t.items  i.items
+  ;:  weld
+    i.items
+    separator
+    $(items t.items)
+  ==
+::
+++  make-json-sessions-list
+  |=  sessions=(list [game-id=@t status=session-status bank=@ud deals-made=@ud])
+  ^-  tape
+  ?~  sessions
+    "\{\"sessions\":[]}"
+  =/  session-jsons=(list tape)
+    %+  turn  sessions
+    |=  [game-id=@t status=session-status bank=@ud deals-made=@ud]
+    ^-  tape
+    ;:  weld
+      "\{\"gameId\":\""
+      (trip game-id)
+      "\",\"status\":\""
+      (scow %tas status)
+      "\",\"bank\":"
+      (a-co:co bank)
+      ",\"dealsMade\":"
+      (a-co:co deals-made)
+      "}"
+    ==
+  ;:  weld
+      "\{\"sessions\":["
+      (join-tapes session-jsons ",")
+      "]}"
+  ==
+::
+++  make-json-full-session
+  |=  sess=session-state
+  ^-  tape
+  ;:  weld
+    "\{\"gameId\":\""
+    (trip game-id.sess)
+    "\",\"status\":\""
+    (scow %tas status.sess)
+    "\",\"playerPkh\":"
+    ?~(player-pkh.sess "null" (weld "\"" (weld (trip u.player-pkh.sess) "\"")))
+    ",\"bank\":"
+    (a-co:co bank.game.sess)
+    ",\"currentBet\":"
+    (a-co:co current-bet.game.sess)
+    ",\"dealsMade\":"
+    (a-co:co deals-made.game.sess)
+    ",\"gameInProgress\":"
+    ?:(game-in-progress.game.sess "true" "false")
+    ",\"playerHand\":"
+    ?:(=(~ player-hand.game.sess) "[]" (hand-to-json (snag 0 player-hand.game.sess)))
+    ",\"dealerHand\":"
+    ?:(=(~ dealer-hand.game.sess) "[]" (hand-to-json (snag 0 dealer-hand.game.sess)))
+    ",\"dealerTurn\":"
+    ?:(dealer-turn.game.sess "true" "false")
+    ",\"history\":"
+    (history-list-to-json history.sess)
+    ",\"winLoss\":"
+    (a-co:co win-loss.game.sess)
+    "}"
+  ==
+::
+++  parse-json-text
+  |=  [key=tape json-text=tape]
+  ^-  (unit @t)
+  ::  Find the key in the JSON
+  =/  key-str=tape  (weld "\"" (weld key "\":\""))
+  =/  idx=(unit @ud)  (find key-str json-text)
+  ?~  idx  ~
+  ::  Skip past the key, colon, and opening quote
+  =/  remaining=tape  (slag (add u.idx (lent key-str)) json-text)
+  ::  Extract characters until closing quote
+  =/  text=tape
+    |-  ^-  tape
+    ?~  remaining  ~
+    ?:  =(i.remaining '"')  ~
+    [i.remaining $(remaining t.remaining)]
+  ?~  text  ~
+  `(crip text)
+::
+++  make cashout-tx-effect
+  |=  [src-pkh=@ trg-pkh=@ amount=@]
+  ^-  tx-effect:tx
+  :*  %tx
+      %send
+      src_pkh=src-pkh
+      trg_pkh=trg-pkh
+      amount=amount
+  ==
+::
+++  make-json-cashout-tx
+  |=  [game-id=@t amount=@ud player-pkh=@t new-bank=@ud tx-ready=? error=(unit tape)]
+  ^-  tape
+  ?^  error
+    ::  Error response
+    ;:  weld
+      "\{\"success\":false,\"error\":\""
+      u.error
+      "\"}"
+    ==
+  ::  Success response
+  ;:  weld
+    "\{\"success\":true"
+    ",\"gameId\":\""
+    (trip game-id)
+    "\",\"amount\":"
+    (a-co:co amount)
+    ",\"playerPkh\":\""
+    (trip player-pkh)
+    "\",\"newBank\":"
+    (a-co:co new-bank)
+    ",\"txReady\":"
+    ?:(tx-ready "true" "false")
+    ",\"message\":\""
+    ?:(tx-ready "Transaction built successfully - awaiting submission" "Transaction structure prepared")
+    "\"}"
+  ==
+::
++$  config-poke
+  $:  %init-config
+      wallet-pkh=@t
+      private-key=@t
+      confirmation-blocks=@ud
+      enable-blockchain=?
+      initial-bank=@ud
+      max-history=@ud
+  ==
+::
 --
