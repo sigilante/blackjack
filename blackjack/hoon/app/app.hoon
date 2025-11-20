@@ -1,7 +1,7 @@
 ::  blackjack/app/blackjack.hoon
 ::  Browser-based blackjack game served as a NockApp
 ::
-/+  http, blackjack
+/+  http, blackjack, txt=types
 /=  *  /common/wrapper
 ::  Wallet imports
 /=  wallet        /apps/wallet/wallet
@@ -75,7 +75,7 @@
   ::
   ++  poke
     |=  =ovum:moat
-    ^-  [(list ?(effect:http effect:wt)) server-state]
+    ^-  [(list ?(effect:http effect:wt effect:txt)) server-state]
     ::  Extract entropy from poke input
     =/  entropy=@  eny.input.ovum
     ::
@@ -169,6 +169,7 @@
         ~&  >>  "Matched route: /blackjack/style.css"
         ~&  >>  "CSS length: {<(met 3 q.style)>} bytes"
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -185,6 +186,7 @@
         ~&  >>  "Matched route: /blackjack/game.js"
         ~&  >>  "JS length: {<(met 3 q.game)>} bytes"
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -200,6 +202,7 @@
           [%blackjack %img %'sprites.png' ~]
         ~&  >>  "Matched route: /blackjack/img/sprites.png"
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -215,6 +218,7 @@
           [%blackjack %'watcher.html' ~]
         ~&  >>  "Matched route: /blackjack/watcher.html"
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -228,6 +232,7 @@
           [%blackjack %'watcher.js' ~]
         ~&  >>  "Matched route: /blackjack/watcher.js"
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -241,6 +246,7 @@
           [%blackjack %'watcher.css' ~]
         ~&  >>  "Matched route: /blackjack/watcher.css"
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -254,6 +260,7 @@
           [%blackjack %'wallet.html' ~]
         ~&  >>  "Matched route: /blackjack/wallet.html"
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -267,6 +274,7 @@
           [%blackjack %'wallet.js' ~]
         ~&  >>  "Matched route: /blackjack/wallet.js"
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -280,6 +288,7 @@
           [%blackjack %'wallet.css' ~]
         ~&  >>  "Matched route: /blackjack/wallet.css"
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -304,6 +313,7 @@
           (make-json-sessions-list:blackjack session-list)
         ~&  >>>  "JSON response: {<json>}"
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -328,6 +338,7 @@
         =/  json=tape
           (make-json-full-session:blackjack u.existing)
         :_  state
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -373,6 +384,7 @@
           (make-json-session-created:blackjack game-id wallet-pkh.config bank.initial-game)
         ~&  >>  "Created session: {<game-id>}"
         :_  state(sessions (~(put by sessions.state) game-id new-session))
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -390,6 +402,7 @@
         ?~  body
           =/  error-json=tape  (make-json-error:blackjack 400 "Missing request body")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  body-text=tape  (trip q.u.body)
@@ -414,6 +427,7 @@
         ?^  validation-error
           =/  error-json=tape  (make-json-error:blackjack 400 u.validation-error)
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
@@ -421,6 +435,7 @@
         ?:  (gth bet bank.current-game)
           =/  error-json=tape  (make-json-error:blackjack 400 "Insufficient funds")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
@@ -451,6 +466,7 @@
           (make-json-deal:blackjack player-hand dealer-hand player-score dealer-visible 0 new-bank win-loss.updated-game)
         ::
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -470,6 +486,7 @@
           ~&  >>>  "Session not found: {<game-id>}"
           =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  current-session=session-state:blackjack  u.existing
@@ -481,6 +498,7 @@
         ?^  validation-error
           =/  error-json=tape  (make-json-error:blackjack 400 u.validation-error)
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
@@ -504,6 +522,7 @@
           (make-json-hit:blackjack new-card new-player-hand new-score busted bank.updated-game win-loss.updated-game)
         ::
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -523,6 +542,7 @@
           ~&  >>>  "Session not found: {<game-id>}"
           =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  current-session=session-state:blackjack  u.existing
@@ -609,6 +629,7 @@
           ~&  >>>  "Session not found: {<game-id>}"
           =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  current-session=session-state:blackjack  u.existing
@@ -627,6 +648,7 @@
         ?:  (gth current-bet.current-game bank.current-game)
           =/  error-json=tape  (make-json-error:blackjack 400 "Insufficient funds to double down")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
@@ -668,6 +690,7 @@
           =/  json=tape
             (make-json-double:blackjack new-player-hand dealer-hand-current dealer-score %loss 0 new-bank new-win-loss)
           :_  state(sessions (~(put by sessions.state) game-id final-session))
+          ^-  (list effect:http)
           :_  ~
           ^-  effect:http
           :*  %res  id  %200
@@ -725,6 +748,7 @@
           (make-json-double:blackjack new-player-hand final-dealer-hand dealer-score outcome payout final-bank new-win-loss)
         ::
         :_  state(sessions (~(put by sessions.state) game-id final-session))
+        ^-  (list effect:http)
         :_  ~
         ^-  effect:http
         :*  %res  id  %200
@@ -741,6 +765,7 @@
         ?~  body
           =/  error-json=tape  (make-json-error:blackjack 400 "Missing request body")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         =/  body-text=tape  (trip q.u.body)
@@ -755,16 +780,19 @@
         ?~  game-id-parsed
           =/  error-json=tape  (make-json-cashout-tx:blackjack '' 0 '' 0 %.n ~ `"Missing gameId field")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ?~  player-pkh-parsed
           =/  error-json=tape  (make-json-cashout-tx:blackjack u.game-id-parsed 0 '' 0 %.n ~ `"Missing playerPkh field")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ?~  amount-parsed
           =/  error-json=tape  (make-json-cashout-tx:blackjack u.game-id-parsed 0 u.player-pkh-parsed 0 %.n ~ `"Missing amount field")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
@@ -779,6 +807,7 @@
           ~&  >>>  "Session not found: {<game-id>}"
           =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh 0 %.n ~ `"Session not found")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
@@ -789,6 +818,7 @@
         ?:  game-in-progress.current-game
           =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n ~ `"Cannot cash out during active game")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
@@ -796,6 +826,7 @@
         ?:  (gth amount bank.current-game)
           =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n ~ `"Insufficient balance")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
@@ -803,6 +834,7 @@
         ?:  =(0 amount)
           =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n ~ `"Amount must be greater than 0")
           :_  state
+          ^-  (list effect:http)
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
@@ -833,7 +865,9 @@
         ~&  >>  "Cashout completed, returning response"
         ::
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
+        ^-  (list ?(effect:http effect:wt effect:txt))
         ;:  weld
+          ^-  (list effect:http)
           :~  ^-  effect:http
               :*  %res  id  %200
                   :~  ['Content-Type' 'application/json']
@@ -844,9 +878,11 @@
           ::  Create transaction effect if config exists
           ?~  config.state
             ~&  >>  "No config state for creating cashout tx effect"
+            ^-  (list effect:http)
             ~
           ?~  private-key.u.config.state
             ~&  >>  "No private key in config, cannot create transaction"
+            ^-  (list effect:http)
             ~
           ::  Build the transaction effect
           =/  tx-effect=effect:wt
@@ -857,6 +893,7 @@
               player-pkh
               amount
             ==
+          ^-  (list effect:wt)
           ~[tx-effect]
         ==
       ==  :: end POST

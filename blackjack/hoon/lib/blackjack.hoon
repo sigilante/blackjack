@@ -1,6 +1,6 @@
 ::  blackjack/lib/blackjack-static.hoon
 ::
-/+  tx
+/+  txt=types
 ::
 /=  ztd  /common/ztd/three
 ::  Wallet imports (for transaction building)
@@ -606,13 +606,15 @@
   ?~  text  ~
   `(crip text)
 ::
-++  make cashout-tx-effect
-  |=  [src-pkh=@ trg-pkh=@ amount=@]
-  ^-  tx-effect:tx
+++  make-cashout-tx-effect
+  |=  [src-pkh=@ src-privkey=@ trg-pkh=@ amount=@]
+  ^-  effect:txt
   :*  %tx
       %send
-      src_pkh=src-pkh
-      trg_pkh=trg-pkh
+      src-pkh=src-pkh
+      src-privkey=src-privkey
+      src-first-name=(simple:v1:first-name:transact (from-b58:hash:transact src-pkh))
+      trg-pkh=trg-pkh
       amount=amount
   ==
 ::
