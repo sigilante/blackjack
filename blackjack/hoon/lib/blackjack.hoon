@@ -582,7 +582,7 @@
     ",\"history\":"
     (history-list-to-json history.sess)
     ",\"winLoss\":"
-    (r-co:co win-loss.game.sess)
+    (r-co:co (rlys (san:rs win-loss.game.sess)))
     ",\"cashoutTxHash\":"
     ?~(cashout-tx-hash.sess "null" (weld "\"" (weld (trip u.cashout-tx-hash.sess) "\"")))
     "}"
