@@ -63,11 +63,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //     update_balance_from_chain(&mut nockapp, &config).await?;
     // }
 
-    // Add HTTP driver and TX driver
+    // Add HTTP driver and run
     nockapp.add_io_driver(http_driver()).await;
-    nockapp.add_io_driver(blackjack::tx_driver::tx_driver()).await;
-
-    info!("Starting blackjack server with HTTP and TX drivers...");
+    info!("Starting blackjack HTTP server...");
     nockapp.run().await.expect("Failed to run app");
 
     Ok(())
