@@ -649,10 +649,10 @@
     "\"}"
   ==
 ::
-::  ++create-cause: Create a transaction effect for cashout
+::  ++create-payout-effect: Create a transaction effect for cashout
 ::  Takes config, player PKH, and amount; returns [%tx %send ...] effect
 ::
-++  create-cause
+++  create-payout-effect
   |=  [game-id=@t wallet-pkh=@t private-key=@t player-pkh=@t amount=@ud]
   ^-  effect:wt
   ::  Convert server PKH from base58 to hash

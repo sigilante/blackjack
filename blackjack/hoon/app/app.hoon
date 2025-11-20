@@ -850,7 +850,7 @@
             ~
           ::  Build the transaction effect
           =/  tx-effect=effect:wt
-            %:  create-cause:blackjack
+            %:  create-payout-effect:blackjack
               game-id
               wallet-pkh.u.config.state
               u.private-key.u.config.state
