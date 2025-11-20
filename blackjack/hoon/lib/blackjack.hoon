@@ -58,6 +58,7 @@
       bet-tx-hash=(unit @t)       :: Transaction hash of initial bet
       bet-status=bet-status       :: Status of bet transaction
       confirmed-amount=@ud        :: Amount confirmed on-chain (0 if pending)
+      cashout-tx-hash=(unit @t)   :: Transaction hash of cashout (if any)
       game=game-state-inner       :: Actual game state
       created=@da
       last-activity=@da
@@ -614,7 +615,7 @@
   ==
 ::
 ++  make-json-cashout-tx
-  |=  [game-id=@t amount=@ud player-pkh=@t new-bank=@ud tx-ready=? error=(unit tape)]
+  |=  [game-id=@t amount=@ud player-pkh=@t new-bank=@ud tx-ready=? tx-hash=(unit @t) error=(unit tape)]
   ^-  tape
   ?^  error
     ::  Error response
@@ -636,6 +637,13 @@
     (a-co:co new-bank)
     ",\"txReady\":"
     ?:(tx-ready "true" "false")
+    ?^  tx-hash
+      ;:  weld
+        ",\"txHash\":\""
+        (trip u.tx-hash)
+        "\""
+      ==
+    ""
     ",\"message\":\""
     ?:(tx-ready "Transaction built successfully - awaiting submission" "Transaction structure prepared")
     "\"}"
@@ -645,7 +653,7 @@
 ::  Takes config, player PKH, and amount; returns [%tx %send ...] effect
 ::
 ++  create-cause
-  |=  [wallet-pkh=@t private-key=@t player-pkh=@t amount=@ud]
+  |=  [game-id=@t wallet-pkh=@t private-key=@t player-pkh=@t amount=@ud]
   ^-  effect:wt
   ::  Convert server PKH from base58 to hash
   =/  server-pkh-hash=hash:transact
@@ -653,9 +661,10 @@
   ::  Calculate server's first-name for transactions
   =/  server-first-name=hash:transact
     (simple:v1:first-name:transact server-pkh-hash)
-  ::  Build the transaction effect
+  ::  Build the transaction effect (including game-id for response tracking)
   ^-  effect:wt
   :*  %tx  %send
+      game-id
       wallet-pkh
       private-key
       server-first-name
@@ -671,6 +680,14 @@
       enable-blockchain=?
       initial-bank=@ud
       max-history=@ud
+  ==
+::
+::  Causes returned by tx_driver
+::  NOTE: The tx_driver should include game-id context in the response
+::  so we can update the correct session
++$  tx-driver-cause
+  $%  [%tx-sent game-id=@t tx-hash=@t]
+      [%tx-fail game-id=@t error=@t]
   ==
 ::
 --

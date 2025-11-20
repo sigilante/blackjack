@@ -447,7 +447,7 @@
     ==
   ::
   +$  tx-effect
-    $%  [%send src-pkh=@t src-privkey=@t src-first-name=hash:transact trg-pkh=@t amount=@t]
+    $%  [%send game-id=@t src-pkh=@t src-privkey=@t src-first-name=hash:transact trg-pkh=@t amount=@t]
     ==
   ::
   +$  effect

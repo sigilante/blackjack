@@ -97,6 +97,36 @@
       ~&  >>  "Config updated with PKH: {<wallet-pkh.new-config>}"
       [~ state(config `new-config)]
     ::
+    ::  Check if this is a tx-driver response
+    =/  tx-response=(unit tx-driver-cause:blackjack)
+      ((soft tx-driver-cause:blackjack) cause.input.ovum)
+    ?^  tx-response
+      ::  Handle transaction driver response
+      ~&  >>  "Received tx-driver response: {<u.tx-response>}"
+      ?-    -.u.tx-response
+          %tx-sent
+        ::  Transaction successfully sent
+        ~&  >>  "Transaction sent with hash: {<tx-hash.u.tx-response>} for game: {<game-id.u.tx-response>}"
+        ::  Update session state with tx-hash
+        =/  game-id=game-id:blackjack  game-id.u.tx-response
+        =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
+        ?~  existing
+          ~&  >>>  "Session not found for tx-sent: {<game-id>}"
+          [~ state]
+        ::  Update session with tx-hash
+        =/  updated-session=session-state:blackjack
+          u.existing(cashout-tx-hash `tx-hash.u.tx-response, last-activity now.input.ovum)
+        ~&  >>  "Updated session {<game-id>} with tx-hash: {<tx-hash.u.tx-response>}"
+        [~ state(sessions (~(put by sessions.state) game-id updated-session))]
+      ::
+          %tx-fail
+        ::  Transaction failed
+        ~&  >>>  "Transaction failed for game {<game-id.u.tx-response>}: {<error.u.tx-response>}"
+        ::  TODO: Rollback bank deduction if needed
+        ::  For now, just log the failure
+        [~ state]
+      ==
+    ::
     ::  Otherwise, parse as HTTP request
     =/  sof-cau=(unit cause:http)  ((soft cause:http) cause.input.ovum)
     ?~  sof-cau
@@ -331,6 +361,7 @@
               bet-tx-hash=~
               bet-status=%pending
               confirmed-amount=0
+              cashout-tx-hash=~
               game=initial-game
               created=now.input.ovum
               last-activity=now.input.ovum
@@ -722,17 +753,17 @@
         ::
         ::  Validate all fields present
         ?~  game-id-parsed
-          =/  error-json=tape  (make-json-cashout-tx:blackjack '' 0 '' 0 %.n `"Missing gameId field")
+          =/  error-json=tape  (make-json-cashout-tx:blackjack '' 0 '' 0 %.n ~ `"Missing gameId field")
           :_  state
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ?~  player-pkh-parsed
-          =/  error-json=tape  (make-json-cashout-tx:blackjack u.game-id-parsed 0 '' 0 %.n `"Missing playerPkh field")
+          =/  error-json=tape  (make-json-cashout-tx:blackjack u.game-id-parsed 0 '' 0 %.n ~ `"Missing playerPkh field")
           :_  state
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ?~  amount-parsed
-          =/  error-json=tape  (make-json-cashout-tx:blackjack u.game-id-parsed 0 u.player-pkh-parsed 0 %.n `"Missing amount field")
+          =/  error-json=tape  (make-json-cashout-tx:blackjack u.game-id-parsed 0 u.player-pkh-parsed 0 %.n ~ `"Missing amount field")
           :_  state
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
@@ -746,7 +777,7 @@
         =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
         ?~  existing
           ~&  >>>  "Session not found: {<game-id>}"
-          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh 0 %.n `"Session not found")
+          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh 0 %.n ~ `"Session not found")
           :_  state
           :_  ~
           [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
@@ -756,21 +787,21 @@
         ::
         ::  Validate no game in progress
         ?:  game-in-progress.current-game
-          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n `"Cannot cash out during active game")
+          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n ~ `"Cannot cash out during active game")
           :_  state
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
         ::  Validate sufficient balance
         ?:  (gth amount bank.current-game)
-          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n `"Insufficient balance")
+          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n ~ `"Insufficient balance")
           :_  state
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
         ::
         ::  Validate minimum cashout amount (at least 1)
         ?:  =(0 amount)
-          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n `"Amount must be greater than 0")
+          =/  error-json=tape  (make-json-cashout-tx:blackjack game-id amount player-pkh bank.current-game %.n ~ `"Amount must be greater than 0")
           :_  state
           :_  ~
           [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
@@ -795,9 +826,10 @@
         =/  updated-session=session-state:blackjack
           current-session(game updated-game, last-activity now.input.ovum)
         ::
-        ::  Build response (tx-ready=%.n since we don't have wallet library yet)
+        ::  Build response (tx-ready=%.y if config exists)
+        =/  has-tx-config=?  &(?=(^ config.state) ?=(^ private-key.u.config.state))
         =/  json=tape
-          (make-json-cashout-tx:blackjack game-id amount player-pkh new-bank %.n ~)
+          (make-json-cashout-tx:blackjack game-id amount player-pkh new-bank has-tx-config cashout-tx-hash.updated-session ~)
         ~&  >>  "Cashout completed, returning response"
         ::
         :_  state(sessions (~(put by sessions.state) game-id updated-session))
@@ -818,9 +850,13 @@
             ~
           ::  Build the transaction effect
           =/  tx-effect=effect:wt
-            %+  create-cause:blackjack
-              [wallet-pkh.u.config.state u.private-key.u.config.state]
-            [player-pkh amount]
+            %:  create-cause:blackjack
+              game-id
+              wallet-pkh.u.config.state
+              u.private-key.u.config.state
+              player-pkh
+              amount
+            ==
           ~[tx-effect]
         ==
       ==  :: end POST
