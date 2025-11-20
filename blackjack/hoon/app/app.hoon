@@ -830,7 +830,7 @@
             ",\"bank\":"
             (a-co:co new-bank)
             ",\"winLoss\":"
-            (r-co:co new-win-loss)
+            (r-co:co (rlys (san:rs new-win-loss)))
             "}"
           ==
         ::
