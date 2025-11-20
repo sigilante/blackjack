@@ -280,7 +280,11 @@ function updateDisplay() {
     // Update bank and bet displays
     document.getElementById('bank-amount').textContent = `ℕ${gameState.bank}`;
     document.getElementById('current-bet').textContent = `ℕ${gameState.currentBet}`;
-    document.getElementById('win-loss').textContent = `ℕ${gameState.winLoss >= 0 ? '+' : ''}${gameState.winLoss}`;
+
+    // Format win/loss with explicit sign
+    const winLoss = gameState.winLoss;
+    const winLossText = winLoss > 0 ? `+${winLoss}` : `${winLoss}`;
+    document.getElementById('win-loss').textContent = `ℕ${winLossText}`;
 
     // Update bet display
     updateBetDisplay();
