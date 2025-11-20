@@ -1,0 +1,187 @@
+/* Wallet-specific styles */
+
+.wallet-container {
+    padding: 16px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.wallet-section {
+    margin-bottom: 20px;
+    padding: 12px;
+    background: #c0c0c0;
+    border: 2px outset #ddd;
+}
+
+.section-title {
+    font-weight: bold;
+    margin-bottom: 12px;
+    padding: 4px;
+    background: #000080;
+    color: white;
+    font-size: 13px;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: bold;
+    font-size: 11px;
+}
+
+.text-input {
+    width: 100%;
+    max-width: 500px;
+    padding: 4px;
+    font-family: 'MS Sans Serif', 'Microsoft Sans Serif', sans-serif;
+    font-size: 11px;
+    border: 2px inset #ddd;
+    background: white;
+}
+
+.pkh-display {
+    display: inline-block;
+    padding: 6px 8px;
+    background: white;
+    border: 2px inset #ddd;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    word-break: break-all;
+    max-width: 500px;
+}
+
+.btn-copy {
+    margin-left: 8px;
+    padding: 4px 12px;
+    font-family: 'MS Sans Serif', 'Microsoft Sans Serif', sans-serif;
+    font-size: 11px;
+    background: #c0c0c0;
+    border: 2px outset #ddd;
+    cursor: pointer;
+}
+
+.btn-copy:active {
+    border-style: inset;
+}
+
+.balance-display {
+    font-size: 18px;
+    font-weight: bold;
+    color: #000080;
+    padding: 8px;
+    background: white;
+    border: 2px inset #ddd;
+    display: inline-block;
+    min-width: 100px;
+}
+
+.btn-primary {
+    padding: 6px 16px;
+    font-family: 'MS Sans Serif', 'Microsoft Sans Serif', sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    background: #c0c0c0;
+    border: 2px outset #ddd;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.btn-primary:active {
+    border-style: inset;
+}
+
+.btn-primary:hover {
+    background: #d0d0d0;
+}
+
+.instructions {
+    padding: 8px;
+    background: #ffffcc;
+    border: 1px solid #999;
+    margin-bottom: 12px;
+    font-size: 11px;
+}
+
+.instructions p {
+    margin: 4px 0;
+}
+
+.transaction-list {
+    background: white;
+    border: 2px inset #ddd;
+    padding: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.no-transactions {
+    text-align: center;
+    color: #888;
+    padding: 20px;
+    font-style: italic;
+}
+
+.transaction-entry {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: #f0f0f0;
+    border: 1px solid #999;
+}
+
+.tx-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.tx-type {
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+}
+
+.tx-deposit {
+    background: #008000;
+    color: white;
+}
+
+.tx-withdrawal {
+    background: #800000;
+    color: white;
+}
+
+.tx-amount {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.tx-status {
+    padding: 2px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+}
+
+.tx-confirmed {
+    background: #008000;
+    color: white;
+}
+
+.tx-pending {
+    background: #808000;
+    color: white;
+}
+
+.tx-details {
+    font-size: 10px;
+    color: #666;
+}
+
+.tx-hash {
+    font-family: 'Courier New', monospace;
+}
