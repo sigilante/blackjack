@@ -784,7 +784,7 @@ function split() {
 }
 
 // Player surrenders
-function surrender() {
+async function surrender() {
     if (!gameState.gameInProgress || gameState.dealerTurn) {
         return;
     }
@@ -795,14 +795,41 @@ function surrender() {
     document.getElementById('stand-btn').disabled = true;
 
     gameState.dealerTurn = true;
+    setStatus('Surrendering...');
 
-    // Return half the bet
-    const halfBet = Math.floor(gameState.currentBet / 2);
-    gameState.bank += halfBet;
-    gameState.winLoss -= halfBet;
+    try {
+        // Call server API to surrender
+        const response = await fetch(`/blackjack/api/${gameId}/surrender`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
 
-    updateDisplay();
-    endRound(`Surrendered. Lost ℕ${halfBet}.`);
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Surrender response:', data);
+
+        // Update game state from server
+        gameState.bank = data.bank;
+        gameState.winLoss = data.winLoss || 0;
+        gameState.currentBet = 0;
+        gameState.gameInProgress = false;
+
+        updateDisplay();
+        setStatus(`Surrendered. Payout: ℕ${data.payout}. Place a bet to play again.`);
+
+        // Disable action buttons
+        document.getElementById('deal-btn').disabled = true;
+        document.getElementById('hit-btn').disabled = true;
+        document.getElementById('stand-btn').disabled = true;
+        disableSpecialActions();
+
+    } catch (error) {
+        console.error('Error surrendering:', error);
+        setStatus('Error surrendering: ' + error.message);
+    }
 }
 
 // Dealer plays according to rules

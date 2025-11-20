@@ -764,6 +764,86 @@
             (to-octs:http (crip json))
         ==
         ::
+          ::  Player surrenders
+          [%blackjack %api game-id:blackjack %surrender ~]
+        =/  =game-id:blackjack  (snag 2 `path`uri)
+        ~&  >>  "Matched /blackjack/api/{<game-id>}/surrender route"
+        ::  Get session state
+        =/  existing=(unit session-state:blackjack)  (~(get by sessions.state) game-id)
+        ?~  existing
+          ~&  >>>  "Session not found: {<game-id>}"
+          =/  error-json=tape  (make-json-error:blackjack 404 "Session not found")
+          :_  state
+          :_  ~
+          [%res id %404 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        =/  current-session=session-state:blackjack  u.existing
+        =/  current-game=game-state-inner:blackjack  game.current-session
+        ::
+        ::  Validate game action
+        =/  validation-error=(unit tape)
+          (validate-game-action:blackjack %surrender current-session)
+        ?^  validation-error
+          =/  error-json=tape  (make-json-error:blackjack 400 u.validation-error)
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::
+        ::  Calculate surrender return (half bet)
+        =/  half-bet=@ud  (div current-bet.current-game 2)
+        =/  new-bank=@ud  (add bank.current-game half-bet)
+        ::
+        ::  Calculate win/loss change (lose half the bet)
+        =/  profit=@sd
+          =/  raw-profit=@s  (dif:si (sun:si half-bet) (sun:si current-bet.current-game))
+          ?:  (syn:si raw-profit)  raw-profit
+          (new:si %.n (abs:si raw-profit))
+        =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
+        ::
+        ::  Update game state
+        =/  updated-game=game-state-inner:blackjack
+          current-game(bank new-bank, win-loss new-win-loss, current-bet 0, game-in-progress %.n)
+        ::
+        ::  Create history entry
+        =/  history-entry=hand-history:blackjack
+          :*  bet=current-bet.current-game
+              player-hand=(snag 0 player-hand.current-game)
+              dealer-hand=(snag 0 dealer-hand.current-game)
+              outcome=%loss
+              payout=half-bet
+              bank-after=new-bank
+              timestamp=now.input.ovum
+          ==
+        ::  Append to history
+        =/  config=runtime-config:blackjack  (get-config state)
+        =/  new-history=(list hand-history:blackjack)
+          (append-to-history:blackjack history-entry history.current-session max-history-entries.config)
+        ::
+        ::  Update session state
+        =/  updated-session=session-state:blackjack
+          current-session(game updated-game, last-activity now.input.ovum, status %ended, history new-history)
+        ::
+        =/  json=tape
+          ;:  weld
+            "\{\"outcome\":\"surrendered\""
+            ",\"payout\":"
+            (a-co:co half-bet)
+            ",\"bank\":"
+            (a-co:co new-bank)
+            ",\"winLoss\":"
+            (r-co:co new-win-loss)
+            "}"
+          ==
+        ::
+        :_  state(sessions (~(put by sessions.state) game-id updated-session))
+        :_  ~
+        ^-  effect:http
+        :*  %res  id  %200
+            :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+            ==
+            (to-octs:http (crip json))
+        ==
+        ::
           ::  Cash out - withdraw funds from game to player's wallet
           [%blackjack %api %wallet %cashout ~]
         ~&  >>  "Matched /blackjack/api/wallet/cashout route"

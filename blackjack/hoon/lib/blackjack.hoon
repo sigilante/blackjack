@@ -457,7 +457,7 @@
   (scag max-entries `(list hand-history)`[new-entry old-history])
 ::
 ++  validate-game-action
-  |=  [action=?(%hit %stand %double %deal) sess=session-state]
+  |=  [action=?(%hit %stand %double %deal %surrender) sess=session-state]
   ^-  (unit tape)
   ::  Returns error message if invalid, ~ if valid
   =/  game=game-state-inner  game.sess
@@ -482,6 +482,13 @@
       ::  Check if player has exactly 2 cards (first turn only)
       ?:  !=(2 (lent (snag 0 player-hand.game)))
         `"Can only double on first two cards"
+      ~
+    %surrender
+      ?:  |(=(%.n game-in-progress.game) dealer-turn.game)
+        `"Cannot surrender - not player's turn"
+      ::  Check if player has exactly 2 cards (can only surrender on first turn)
+      ?:  !=(2 (lent (snag 0 player-hand.game)))
+        `"Can only surrender on first two cards"
       ~
   ==
 ::
