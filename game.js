@@ -529,10 +529,10 @@ async function dealHand() {
         document.getElementById('stand-btn').disabled = false;
         document.getElementById('deal-btn').disabled = true;
 
-        // Enable double down if player has enough money
-        if (gameState.bank >= gameState.currentBet) {
-            document.getElementById('double-btn').disabled = false;
-        }
+        // Double down disabled - not implemented in UI
+        // if (gameState.bank >= gameState.currentBet) {
+        //     document.getElementById('double-btn').disabled = false;
+        // }
 
         // Enable surrender
         document.getElementById('surrender-btn').disabled = false;
