@@ -583,6 +583,8 @@
     (history-list-to-json history.sess)
     ",\"winLoss\":"
     (a-co:co win-loss.game.sess)
+    ",\"cashoutTxHash\":"
+    ?~(cashout-tx-hash.sess "null" (weld "\"" (weld (trip u.cashout-tx-hash.sess) "\"")))
     "}"
   ==
 ::
