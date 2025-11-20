@@ -9,6 +9,8 @@ use nockapp::NockApp;
 use nockvm::noun::{Noun, D, T, YES, NO};
 use tracing::info;
 
+pub mod tx_driver;
+
 /// Configuration for the Blackjack server
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct BlackjackConfig {
