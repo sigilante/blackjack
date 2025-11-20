@@ -2,6 +2,8 @@
 
 A NockApp blackjack game.
 
+**Status**:  In active development.  The main gameplay is functional, with plans for Nockchain integration next.
+
 ![](./img/header.png)
 
 ## Development Stages
@@ -9,8 +11,8 @@ A NockApp blackjack game.
 This project will be developed in four stages:
 
 1. Browser-based game - Supports hit, stand, and resolve for players and house with bet tracking
-2. **NockApp backend** (Current) - Server with deck shuffling
-3. Nockchain wallet integration - Fakenet wallet support
+2. NockApp backend - Server with deck shuffling
+3. **Nockchain integration** (Current) - Transaction support
 4. Enhanced gameplay - Additional play options
 
 ## Current Features
@@ -19,7 +21,6 @@ This project will be developed in four stages:
 - Windows 3.1 style interface with toolbar and menubar
 - Spritesheet-based playing cards (71x96 Windows 98 style)
 - Poker chip betting interface ($5, $25, $100, $500)
-    
 - Bet tracking and bankroll management
 - Win/loss tracking
 - Dealer AI (dealer hits until 17)
@@ -43,7 +44,7 @@ This project will be developed in four stages:
    nockup run blackjack
    ```
 
-2. Open your browser to `http://127.0.0.1:8080/` (or the address shown in your terminal).
+2. Open your browser to `http://127.0.0.1:8080/blackjack` (or the address/port shown in your terminal).
 
 3. Game flow:
 
@@ -56,20 +57,14 @@ This project will be developed in four stages:
 ## **Game Rules**
 
 - Player starts with $1000
-    
 - Dealer hits until reaching 17
-    
 - Blackjack (21 with first two cards) pays 3:2
-    
-- Player busts over 21
-    
+- Player and dealer bust over 21
 - Push (tie) returns your bet
-    
 
 ## **Status**
 
 The next stage will involve:
 
 - Nockchain wallet integration
-    
 - Multiple hand support

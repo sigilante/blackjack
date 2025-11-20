@@ -48,8 +48,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Load kernel
     let kernel = fs::read("out.jam").map_err(|e| format!("Failed to read out.jam: {}", e))?;
 
-    // Setup NockApp
-    let mut nockapp: NockApp = boot::setup(&kernel, cli, &[], "http-server", None)
+    let mut nockapp: NockApp = boot::setup(&kernel, cli, &[], "blackjack", None)
         .await
         .map_err(|e| format!("Kernel setup failed: {}", e))?;
 
