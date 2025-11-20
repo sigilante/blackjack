@@ -446,12 +446,17 @@
     $%  [%send-tx tx=raw-tx:v1:transact]
     ==
   ::
+  +$  tx-effect
+    $%  [%send src-pkh=@t src-privkey=@t src-first-name=hash:transact trg-pkh=@t amount=@t]
+    ==
+  ::
   +$  effect
     $%  file-effect
         [%markdown @t]
         [%raw *]
         [%grpc grpc-effect]
         [%nockchain-grpc nockchain-grpc-effect]
+        [%tx tx-effect]
         [%exit code=@]
         grpc-effect
     ==

@@ -18,6 +18,12 @@ pub struct BlackjackConfig {
     pub grpc: GrpcConfig,
 }
 
+/// Secrets loaded from secrets.toml
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct SecretsConfig {
+    pub server: ServerConfig,
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ServerConfig {
     pub wallet_pkh: String,
@@ -43,13 +49,43 @@ pub struct GrpcConfig {
 }
 
 impl BlackjackConfig {
-    /// Load configuration from a TOML file
-    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let contents = fs::read_to_string(path.as_ref())
-            .with_context(|| format!("Failed to read config file: {:?}", path.as_ref()))?;
+    /// Load configuration from config and secrets TOML files
+    pub fn load<P: AsRef<Path>>(config_path: P) -> Result<Self> {
+        // Load main config
+        let config_contents = fs::read_to_string(config_path.as_ref())
+            .with_context(|| format!("Failed to read config file: {:?}", config_path.as_ref()))?;
 
-        let config: BlackjackConfig = toml::from_str(&contents)
+        // Determine secrets path (same directory as config)
+        let secrets_path = config_path.as_ref()
+            .parent()
+            .unwrap_or_else(|| Path::new("."))
+            .join("secrets.toml");
+
+        // Load secrets
+        let secrets_contents = fs::read_to_string(&secrets_path)
+            .with_context(|| format!("Failed to read secrets file: {:?}", secrets_path))?;
+
+        let secrets: SecretsConfig = toml::from_str(&secrets_contents)
+            .context("Failed to parse secrets TOML")?;
+
+        // Parse main config without server section
+        #[derive(Deserialize)]
+        struct PartialConfig {
+            blockchain: BlockchainConfig,
+            game: GameConfig,
+            grpc: GrpcConfig,
+        }
+
+        let partial: PartialConfig = toml::from_str(&config_contents)
             .context("Failed to parse TOML config")?;
+
+        // Merge secrets into full config
+        let config = BlackjackConfig {
+            server: secrets.server,
+            blockchain: partial.blockchain,
+            game: partial.game,
+            grpc: partial.grpc,
+        };
 
         // Validate configuration
         config.validate()?;

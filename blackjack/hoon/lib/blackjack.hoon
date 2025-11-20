@@ -641,6 +641,28 @@
     "\"}"
   ==
 ::
+::  ++create-cause: Create a transaction effect for cashout
+::  Takes config, player PKH, and amount; returns [%tx %send ...] effect
+::
+++  create-cause
+  |=  [wallet-pkh=@t private-key=@t player-pkh=@t amount=@ud]
+  ^-  effect:wt
+  ::  Convert server PKH from base58 to hash
+  =/  server-pkh-hash=hash:transact
+    (from-b58:hash:transact wallet-pkh)
+  ::  Calculate server's first-name for transactions
+  =/  server-first-name=hash:transact
+    (simple:v1:first-name:transact server-pkh-hash)
+  ::  Build the transaction effect
+  ^-  effect:wt
+  :*  %tx  %send
+      wallet-pkh
+      private-key
+      server-first-name
+      player-pkh
+      (scot %ud amount)
+  ==
+::
 +$  config-poke
   $:  %init-config
       wallet-pkh=@t

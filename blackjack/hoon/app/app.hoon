@@ -809,14 +809,19 @@
                   ==
                   (to-octs:http (crip json))
           ==  ==
-          ?~  config.state  
-            ~&  >>  "No config state for creating cashout tx cause"
-            [%res ~ %404 ~ ~]
-          =/  =cause:wt  (create-cause:blackjack u.config.state)
-          =/  =ovum:moat  [wire.ovum [eny.input.ovum our.input.ovum now.input.ovum cause]]
-          ^-  effect:wt
-          :: +:(do-create-tx:wallet cause)
-          +:(poke:wallet ovum)
+          ::  Create transaction effect if config exists
+          ?~  config.state
+            ~&  >>  "No config state for creating cashout tx effect"
+            ~
+          ?~  private-key.u.config.state
+            ~&  >>  "No private key in config, cannot create transaction"
+            ~
+          ::  Build the transaction effect
+          =/  tx-effect=effect:wt
+            %+  create-cause:blackjack
+              [wallet-pkh.u.config.state u.private-key.u.config.state]
+            [player-pkh amount]
+          ~[tx-effect]
         ==
       ==  :: end POST
     ==  :: end GET/POST
