@@ -511,9 +511,12 @@
         ::  Update game (end game if busted, clear bet and update win-loss)
         =/  updated-game=game-state-inner:blackjack
           ?:  busted
-            ::  Calculate loss for busting
-            =/  loss=@sd  (new:si %.n current-bet.current-game)
-            =/  new-win-loss=@sd  (sum:si win-loss.current-game loss)
+            ::  Calculate loss for busting (payout=0, so profit = 0 - bet = -bet)
+            =/  profit=@sd
+              =/  raw-profit=@s  (dif:si (sun:si 0) (sun:si current-bet.current-game))
+              ?:  (syn:si raw-profit)  raw-profit
+              (new:si %.n (abs:si raw-profit))
+            =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
             current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet 0, win-loss new-win-loss, game-in-progress %.n)
           current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand))
         ::
