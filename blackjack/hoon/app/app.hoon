@@ -508,10 +508,13 @@
         =/  new-score=@ud  (hand-value:blackjack new-player-hand)
         =/  busted=?  (is-busted:blackjack new-player-hand)
         ::
-        ::  Update game (end game if busted, clear bet)
+        ::  Update game (end game if busted, clear bet and update win-loss)
         =/  updated-game=game-state-inner:blackjack
           ?:  busted
-            current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet 0, game-in-progress %.n)
+            ::  Calculate loss for busting
+            =/  loss=@sd  (new:si %.n current-bet.current-game)
+            =/  new-win-loss=@sd  (sum:si win-loss.current-game loss)
+            current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet 0, win-loss new-win-loss, game-in-progress %.n)
           current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand))
         ::
         ::  Update session state
