@@ -2,7 +2,7 @@
 
 A [NockApp](https://github.com/nockchain/nockchain) blackjack game demonstrating NockApp application design principles.
 
-**Status**:  In active development.  The main gameplay is functional.  Nockchain integration is under way, based on the `tx_driver` release in Nockchain's main repo.
+**Status**:  In active development as a demo.  The main gameplay is functional.  Nockchain integration is under way, based on the `tx_driver` release in Nockchain's main repo.
 
 ![](./img/header.png)
 
@@ -16,6 +16,7 @@ This project will be developed in four stages:
   * [x] Payouts with `tx_driver`
   * [ ] Payins from Nockchain wallet (currently manual)
   * [ ] Server/client support for multiple players
+  * [ ] Better fakenet support
 4. Enhanced gameplay - Additional play options
   * Multiple hands
   * Multiplayer support
@@ -54,7 +55,14 @@ This project will be developed in four stages:
 - Dealer hits until reaching 17
 - Blackjack (21 with first two cards) pays 3:2
 - Player and dealer bust over 21
-- Push (tie) returns your bet
+- Push (tie) returns player's bet
+
+## **Architecture**
+
+As a NockApp application, there are two layers:
+
+1. NockApp kernel:  manages game state, serves HTTP requests, and handles transactions.
+2. NockApp driver:  routes requests to the kernel and processes Nockchain interactivity.
 
 ## **Status**
 
