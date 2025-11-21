@@ -1,8 +1,8 @@
 # **Blackjack**
 
-A NockApp blackjack game.
+A [NockApp](https://github.com/nockchain/nockchain) blackjack game demonstrating NockApp application design principles.
 
-**Status**:  In active development.  The main gameplay is functional, with plans for Nockchain integration next.
+**Status**:  In active development.  The main gameplay is functional.  Nockchain integration is under way, based on the `tx_driver` release in Nockchain's main repo.
 
 ![](./img/header.png)
 
@@ -12,19 +12,13 @@ This project will be developed in four stages:
 
 1. Browser-based game - Supports hit, stand, and resolve for players and house with bet tracking
 2. NockApp backend - Server with deck shuffling
-3. **Nockchain integration** (Current) - Transaction support
+3. Nockchain integration - Transaction support
+  * [x] Payouts with `tx_driver`
+  * [ ] Payins from Nockchain wallet (currently manual)
+  * [ ] Server/client support for multiple players
 4. Enhanced gameplay - Additional play options
-
-## Current Features
-
-- Classic blackjack gameplay (hit, stand)
-- Windows 3.1 style interface with toolbar and menubar
-- Spritesheet-based playing cards (71x96 Windows 98 style)
-- Poker chip betting interface ($5, $25, $100, $500)
-- Bet tracking and bankroll management
-- Win/loss tracking
-- Dealer AI (dealer hits until 17)
-- Blackjack pays 3:2
+  * Multiple hands
+  * Multiplayer support
 
 ## How to Play
 
@@ -44,7 +38,7 @@ This project will be developed in four stages:
    nockup run blackjack
    ```
 
-2. Open your browser to `http://127.0.0.1:8080/blackjack` (or the address/port shown in your terminal).
+2. Open your browser to `http://127.0.0.1:8080/blackjack` (or the address/port shown in your terminal; the port may differ by OS).
 
 3. Game flow:
 
@@ -66,5 +60,5 @@ This project will be developed in four stages:
 
 The next stage will involve:
 
-- Nockchain wallet integration
-- Multiple hand support
+- Enhanced Nockchain wallet integration
+- Multi-hand support and multiplayer features
