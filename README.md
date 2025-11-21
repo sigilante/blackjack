@@ -55,6 +55,7 @@ This project will be developed in four stages:
 - Dealer hits until reaching 17
 - Blackjack (21 with first two cards) pays 3:2
 - Player and dealer bust over 21
+  - TODO dealer should reveal hole card on blackjack
 - Push (tie) returns player's bet
 
 ## **Architecture**
