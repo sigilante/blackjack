@@ -21,9 +21,11 @@
 =>
 |%
 +$  server-state
-  $:  %0
+  $:  %1
       sessions=(map game-id:blackjack session-state:blackjack)
-      config=(unit runtime-config:blackjack)  :: Runtime config (poked from Rust)
+      accounts=(map @t player-account:blackjack)           :: username -> account
+      active-tokens=(map @uvH auth-token:blackjack)        :: token -> token info
+      config=(unit runtime-config:blackjack)               :: Runtime config (poked from Rust)
   ==
 ::
 ::  Default server configuration (fallback if no config poked)
@@ -59,9 +61,20 @@
   ::  +load: upgrade from previous state
   ::
   ++  load
-    |=  arg=server-state
+    |=  arg=*
     ^-  server-state
-    arg
+    =/  old  !<(server-state arg)
+    ?-  -.old
+      %1  old
+      %0
+        %-  (slog 'Migrating state from %0 to %1 (adding account system)' ~)
+        :*  %1
+            sessions.old
+            *(map @t player-account:blackjack)      :: Empty accounts map
+            *(map @uvH auth-token:blackjack)        :: Empty tokens map
+            config.old
+        ==
+    ==
   ::
   ::  +peek: external inspect
   ::
@@ -354,6 +367,143 @@
       ?+    uri
         ~&  >>  "No POST route matched for: {<uri>}"
         [~[[%res ~ %500 ~ ~]] state]
+        ::
+          :: Register new player account
+          [%blackjack %api %auth %register ~]
+        ~&  >>  "Matched /blackjack/api/auth/register route"
+        ?~  body
+          =/  error-json=tape  (make-json-error:blackjack 400 "Missing request body")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        =/  body-text=tape  (trip q.u.body)
+        ~&  >>  "Registration body: {<body-text>}"
+        ::  Parse required fields
+        =/  username-parsed=(unit @t)  (parse-json-text:blackjack "username" body-text)
+        =/  password-parsed=(unit @t)  (parse-json-text:blackjack "password" body-text)
+        =/  pkh-parsed=(unit @t)  (parse-json-text:blackjack "pkh" body-text)
+        ::  Validate all fields present
+        ?~  username-parsed
+          =/  error-json=tape  (make-json-error:blackjack 400 "Missing username field")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ?~  password-parsed
+          =/  error-json=tape  (make-json-error:blackjack 400 "Missing password field")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ?~  pkh-parsed
+          =/  error-json=tape  (make-json-error:blackjack 400 "Missing pkh field")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::  Check if username already exists
+        =/  existing=(unit player-account:blackjack)  (~(get by accounts.state) u.username-parsed)
+        ?^  existing
+          =/  error-json=tape  (make-json-error:blackjack 409 "Username already exists")
+          :_  state
+          :_  ~
+          [%res id %409 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::  Generate salt and hash password
+        =/  salt=@uvH  (generate-salt:blackjack entropy)
+        =/  password-hash=@uvH  (hash-password:blackjack u.password-parsed salt)
+        ::  Create account
+        =/  new-account=player-account:blackjack
+          :*  username=u.username-parsed
+              password-hash=password-hash
+              salt=salt
+              pkh=u.pkh-parsed
+              created=now.input.ovum
+              last-login=now.input.ovum
+              total-sessions=0
+              total-wagered=0
+          ==
+        ~&  >>  "Created account for user: {<u.username-parsed>}"
+        =/  json=tape
+          ;:  weld
+            "\{\"success\":true"
+            ",\"username\":\""
+            (trip u.username-parsed)
+            "\",\"message\":\"Account created successfully\"}"
+          ==
+        :_  state(accounts (~(put by accounts.state) u.username-parsed new-account))
+        :_  ~
+        ^-  effect:http
+        :*  %res  id  %200
+            :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+            ==
+            (to-octs:http (crip json))
+        ==
+        ::
+          :: Login to player account
+          [%blackjack %api %auth %login ~]
+        ~&  >>  "Matched /blackjack/api/auth/login route"
+        ?~  body
+          =/  error-json=tape  (make-json-error:blackjack 400 "Missing request body")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        =/  body-text=tape  (trip q.u.body)
+        ~&  >>  "Login body: {<body-text>}"
+        ::  Parse required fields
+        =/  username-parsed=(unit @t)  (parse-json-text:blackjack "username" body-text)
+        =/  password-parsed=(unit @t)  (parse-json-text:blackjack "password" body-text)
+        ::  Validate fields present
+        ?~  username-parsed
+          =/  error-json=tape  (make-json-error:blackjack 400 "Missing username field")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ?~  password-parsed
+          =/  error-json=tape  (make-json-error:blackjack 400 "Missing password field")
+          :_  state
+          :_  ~
+          [%res id %400 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::  Look up account
+        =/  account=(unit player-account:blackjack)  (~(get by accounts.state) u.username-parsed)
+        ?~  account
+          =/  error-json=tape  (make-json-error:blackjack 401 "Invalid username or password")
+          :_  state
+          :_  ~
+          [%res id %401 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::  Verify password
+        =/  password-valid=?  (verify-password:blackjack u.password-parsed password-hash.u.account salt.u.account)
+        ?:  =(%.n password-valid)
+          =/  error-json=tape  (make-json-error:blackjack 401 "Invalid username or password")
+          :_  state
+          :_  ~
+          [%res id %401 ~[['Content-Type' 'application/json']] (to-octs:http (crip error-json))]
+        ::  Generate auth token (expires in 24 hours)
+        =/  token=@uvH  (generate-auth-token:blackjack u.username-parsed entropy now.input.ovum)
+        =/  expires=@da  (add now.input.ovum ~d1)
+        =/  token-info=auth-token:blackjack
+          [token u.username-parsed now.input.ovum expires]
+        ::  Update account last-login
+        =/  updated-account=player-account:blackjack
+          u.account(last-login now.input.ovum)
+        ~&  >>  "User logged in: {<u.username-parsed>}"
+        =/  json=tape
+          ;:  weld
+            "\{\"success\":true"
+            ",\"token\":\""
+            (scow %uv token)
+            "\",\"username\":\""
+            (trip u.username-parsed)
+            "\",\"pkh\":\""
+            (trip pkh.u.account)
+            "\"}"
+          ==
+        :_  state(accounts (~(put by accounts.state) u.username-parsed updated-account), active-tokens (~(put by active-tokens.state) token token-info))
+        :_  ~
+        ^-  effect:http
+        :*  %res  id  %200
+            :~  ['Content-Type' 'application/json']
+                ['Cache-Control' 'no-cache, no-store, must-revalidate']
+            ==
+            (to-octs:http (crip json))
+        ==
         ::
           :: Create new game session
           [%blackjack %api %session %create ~]

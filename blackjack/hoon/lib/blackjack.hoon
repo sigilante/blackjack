@@ -54,16 +54,36 @@
 ::
 +$  session-state
   $:  game-id=@t
-      player-pkh=(unit @t)        :: Player's public key hash
-      bet-tx-hash=(unit @t)       :: Transaction hash of initial bet
-      bet-status=bet-status       :: Status of bet transaction
-      confirmed-amount=@ud        :: Amount confirmed on-chain (0 if pending)
-      cashout-tx-hash=(unit @t)   :: Transaction hash of cashout (if any)
-      game=game-state-inner       :: Actual game state
+      player-username=(unit @t)       :: Username of player who owns this session
+      player-pkh=(unit @t)            :: Player's public key hash
+      bet-tx-hash=(unit @t)           :: Transaction hash of initial bet
+      bet-status=bet-status           :: Status of bet transaction
+      confirmed-amount=@ud            :: Amount confirmed on-chain (0 if pending)
+      cashout-tx-hash=(unit @t)       :: Transaction hash of cashout (if any)
+      game=game-state-inner           :: Actual game state
       created=@da
       last-activity=@da
       status=session-status
-      history=(list hand-history) :: Last N hands played
+      history=(list hand-history)     :: Last N hands played
+  ==
+::
+::  Player account system
++$  player-account
+  $:  username=@t
+      password-hash=@uvH             :: SHA-256 hash of salted password
+      salt=@uvH                      :: Random salt for password
+      pkh=@t                         :: Player's wallet public key hash
+      created=@da
+      last-login=@da
+      total-sessions=@ud             :: Stats: number of sessions played
+      total-wagered=@ud              :: Stats: total amount wagered
+  ==
+::
++$  auth-token
+  $:  token=@uvH                     :: SHA-256 token
+      username=@t
+      created=@da
+      expires=@da
   ==
 ::
 +$  game-state-inner
@@ -700,5 +720,37 @@
   $%  [%tx-sent game-id=@t tx-hash=@t]
       [%tx-fail game-id=@t error=@t]
   ==
+::
+::  Authentication helpers
+::
+++  generate-salt
+  |=  entropy=@uvJ
+  ^-  @uvH
+  (sham entropy)
+::
+++  hash-password
+  |=  [password=@t salt=@uvH]
+  ^-  @uvH
+  (sham (cat 3 password salt))
+::
+++  verify-password
+  |=  [password=@t stored-hash=@uvH salt=@uvH]
+  ^-  ?
+  =(stored-hash (hash-password password salt))
+::
+++  generate-auth-token
+  |=  [username=@t entropy=@uvJ now=@da]
+  ^-  @uvH
+  (sham [username entropy now])
+::
+++  validate-auth-token
+  |=  [token=@uvH active-tokens=(map @uvH auth-token) now=@da]
+  ^-  (unit @t)
+  =/  token-info=(unit auth-token)  (~(get by active-tokens) token)
+  ?~  token-info  ~
+  ::  Check if token is expired
+  ?:  (gth now expires.u.token-info)
+    ~
+  `username.u.token-info
 ::
 --
