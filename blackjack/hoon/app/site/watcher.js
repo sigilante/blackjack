@@ -1,4 +1,5 @@
 // Watcher state
+console.log('Watcher.js loaded successfully');
 let currentSessionId = null;
 let refreshInterval = null;
 let sessionsListRefreshInterval = null;  // For auto-refreshing sessions list
@@ -62,6 +63,8 @@ async function refreshSessions() {
 
         const data = await response.json();
         console.log('Received data:', data);
+        console.log('Sessions array:', data.sessions);
+        console.log('Sessions array length:', data.sessions ? data.sessions.length : 'undefined');
         const selector = document.getElementById('session-selector');
 
         // Save current selection

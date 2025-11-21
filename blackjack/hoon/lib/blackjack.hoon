@@ -1,6 +1,6 @@
 ::  blackjack/lib/blackjack-static.hoon
 ::
-/+  tx
+/+  txt=types
 ::
 /=  ztd  /common/ztd/three
 ::  Wallet imports (for transaction building)
@@ -58,6 +58,7 @@
       bet-tx-hash=(unit @t)       :: Transaction hash of initial bet
       bet-status=bet-status       :: Status of bet transaction
       confirmed-amount=@ud        :: Amount confirmed on-chain (0 if pending)
+      cashout-tx-hash=(unit @t)   :: Transaction hash of cashout (if any)
       game=game-state-inner       :: Actual game state
       created=@da
       last-activity=@da
@@ -336,7 +337,7 @@
     ",\"bank\":"
     (a-co:co bank)
     ",\"winLoss\":"
-    (a-co:co win-loss)
+    (r-co:co (rlys (san:rs win-loss)))
     "}"
   ==
 ::
@@ -355,7 +356,7 @@
     ",\"bank\":"
     (a-co:co bank)
     ",\"winLoss\":"
-    (a-co:co win-loss)
+    (r-co:co (rlys (san:rs win-loss)))
     "}"
   ==
 ::
@@ -376,7 +377,7 @@
     ",\"bank\":"
     (a-co:co bank)
     ",\"winLoss\":"
-    (a-co:co win-loss)
+    (r-co:co (rlys (san:rs win-loss)))
     "}"
   ==
 ::
@@ -456,7 +457,7 @@
   (scag max-entries `(list hand-history)`[new-entry old-history])
 ::
 ++  validate-game-action
-  |=  [action=?(%hit %stand %double %deal) sess=session-state]
+  |=  [action=?(%hit %stand %double %deal %surrender) sess=session-state]
   ^-  (unit tape)
   ::  Returns error message if invalid, ~ if valid
   =/  game=game-state-inner  game.sess
@@ -481,6 +482,13 @@
       ::  Check if player has exactly 2 cards (first turn only)
       ?:  !=(2 (lent (snag 0 player-hand.game)))
         `"Can only double on first two cards"
+      ~
+    %surrender
+      ?:  |(=(%.n game-in-progress.game) dealer-turn.game)
+        `"Cannot surrender - not player's turn"
+      ::  Check if player has exactly 2 cards (can only surrender on first turn)
+      ?:  !=(2 (lent (snag 0 player-hand.game)))
+        `"Can only surrender on first two cards"
       ~
   ==
 ::
@@ -581,7 +589,9 @@
     ",\"history\":"
     (history-list-to-json history.sess)
     ",\"winLoss\":"
-    (a-co:co win-loss.game.sess)
+    (r-co:co (rlys (san:rs win-loss.game.sess)))
+    ",\"cashoutTxHash\":"
+    ?~(cashout-tx-hash.sess "null" (weld "\"" (weld (trip u.cashout-tx-hash.sess) "\"")))
     "}"
   ==
 ::
@@ -603,18 +613,20 @@
   ?~  text  ~
   `(crip text)
 ::
-++  make cashout-tx-effect
-  |=  [src-pkh=@ trg-pkh=@ amount=@]
-  ^-  tx-effect:tx
+++  make-cashout-tx-effect
+  |=  [src-pkh=@ src-privkey=@ trg-pkh=@ amount=@]
+  ^-  effect:txt
   :*  %tx
       %send
-      src_pkh=src-pkh
-      trg_pkh=trg-pkh
+      src-pkh=src-pkh
+      src-privkey=src-privkey
+      src-first-name=(simple:v1:first-name:transact (from-b58:hash:transact src-pkh))
+      trg-pkh=trg-pkh
       amount=amount
   ==
 ::
 ++  make-json-cashout-tx
-  |=  [game-id=@t amount=@ud player-pkh=@t new-bank=@ud tx-ready=? error=(unit tape)]
+  |=  [game-id=@t amount=@ud player-pkh=@t new-bank=@ud tx-ready=? tx-hash=(unit @t) error=(unit tape)]
   ^-  tape
   ?^  error
     ::  Error response
@@ -636,9 +648,39 @@
     (a-co:co new-bank)
     ",\"txReady\":"
     ?:(tx-ready "true" "false")
+    ?^  tx-hash
+      ;:  weld
+        ",\"txHash\":\""
+        (trip u.tx-hash)
+        "\""
+      ==
+    ""
     ",\"message\":\""
     ?:(tx-ready "Transaction built successfully - awaiting submission" "Transaction structure prepared")
     "\"}"
+  ==
+::
+::  ++create-payout-effect: Create a transaction effect for cashout
+::  Takes config, player PKH, and amount; returns [%tx %send ...] effect
+::
+++  create-payout-effect
+  |=  [game-id=@t wallet-pkh=@t private-key=@t player-pkh=@t amount=@ud]
+  ^-  effect:wt
+  ::  Convert server PKH from base58 to hash
+  =/  server-pkh-hash=hash:transact
+    (from-b58:hash:transact wallet-pkh)
+  ::  Calculate server's first-name for transactions
+  =/  server-first-name=hash:transact
+    (simple:v1:first-name:transact server-pkh-hash)
+  ::  Build the transaction effect (including game-id for response tracking)
+  ^-  effect:wt
+  :*  %tx  %send
+      game-id
+      wallet-pkh
+      private-key
+      server-first-name
+      player-pkh
+      (scot %ud amount)
   ==
 ::
 +$  config-poke
@@ -649,6 +691,14 @@
       enable-blockchain=?
       initial-bank=@ud
       max-history=@ud
+  ==
+::
+::  Causes returned by tx_driver
+::  NOTE: The tx_driver should include game-id context in the response
+::  so we can update the correct session
++$  tx-driver-cause
+  $%  [%tx-sent game-id=@t tx-hash=@t]
+      [%tx-fail game-id=@t error=@t]
   ==
 ::
 --

@@ -11,10 +11,10 @@
     <div class="window">
         <!-- Menu Bar -->
         <div class="menu-bar">
-            <div class="menu-item">Game</div>
+            <div class="menu-item active">Game</div>
             <div class="menu-item" onclick="window.location.href='/blackjack/wallet.html'">Wallet</div>
             <div class="menu-item" onclick="window.location.href='/blackjack/watcher.html'">Watcher</div>
-            <div class="menu-item">Help</div>
+            <div class="menu-item" onclick="window.open('https://github.com/sigilante/blackjack', '_blank')">Help</div>
         </div>
 
         <!-- Toolbar -->
@@ -95,7 +95,7 @@
             <button class="action-btn" id="deal-btn" onclick="dealHand()" disabled>Deal</button>
             <button class="action-btn" id="hit-btn" onclick="hit()" disabled>Hit</button>
             <button class="action-btn" id="stand-btn" onclick="stand()" disabled>Stand</button>
-            <button class="action-btn" id="double-btn" onclick="doubleDown()" disabled>Double Down</button>
+            <button class="action-btn" id="double-btn" onclick="doubleDown()" disabled style="display: none;">Double Down</button>
             <button class="action-btn" id="split-btn" onclick="split()" disabled>Split</button>
             <button class="action-btn" id="surrender-btn" onclick="surrender()" disabled>Surrender</button>
             <button class="action-btn" id="cashout-btn" onclick="cashOut()" disabled>Cash Out</button>

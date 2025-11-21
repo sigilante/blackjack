@@ -169,8 +169,8 @@ async function mockCashOut() {
             from: serverPkh || 'Game Server',
             to: destinationPkh,
             timestamp: new Date().toISOString(),
-            status: data.txReady ? 'ready' : 'prepared',
-            txHash: 'pending-' + Math.random().toString(36).substring(7),
+            status: data.txReady ? 'submitting' : 'prepared',
+            txHash: data.txHash || null,
             gameId: gameId,
             newBank: data.newBank
         };
@@ -184,16 +184,76 @@ async function mockCashOut() {
         updateTransactionList();
         saveState();
 
-        setStatus(data.message || 'Cashout completed successfully');
+        setStatus(data.message || 'Cashout initiated - awaiting blockchain confirmation...');
 
         // Clear inputs
         document.getElementById('cashout-pkh').value = '';
         document.getElementById('cashout-amount').value = '';
 
+        // If transaction is ready, start polling for tx hash
+        if (data.txReady) {
+            pollForTxHash(gameId, tx);
+        }
+
     } catch (error) {
         console.error('Cashout error:', error);
         setStatus('Cashout failed: ' + error.message);
     }
+}
+
+// Poll for transaction hash after cashout
+async function pollForTxHash(gameId, tx) {
+    const maxAttempts = 30; // Poll for up to 30 seconds
+    const pollInterval = 1000; // Check every 1 second
+    let attempts = 0;
+
+    const poll = async () => {
+        try {
+            const response = await fetch(`/blackjack/api/${gameId}/status`);
+
+            if (!response.ok) {
+                console.error('Failed to poll status:', response.status);
+                return;
+            }
+
+            const data = await response.json();
+
+            // Check if we got a transaction hash
+            if (data.cashoutTxHash && data.cashoutTxHash !== 'null') {
+                // Update the transaction record
+                tx.txHash = data.cashoutTxHash;
+                tx.status = 'confirmed';
+
+                updateTransactionList();
+                saveState();
+
+                setStatus(`Transaction confirmed! Hash: ${data.cashoutTxHash}`);
+                return; // Stop polling
+            }
+
+            // Continue polling if we haven't exceeded max attempts
+            attempts++;
+            if (attempts < maxAttempts) {
+                setTimeout(poll, pollInterval);
+            } else {
+                setStatus('Transaction submitted - check status endpoint for hash');
+                tx.status = 'pending';
+                updateTransactionList();
+                saveState();
+            }
+
+        } catch (error) {
+            console.error('Error polling for tx hash:', error);
+            // Continue polling despite errors
+            attempts++;
+            if (attempts < maxAttempts) {
+                setTimeout(poll, pollInterval);
+            }
+        }
+    };
+
+    // Start polling
+    poll();
 }
 
 // Update display
@@ -217,11 +277,25 @@ function updateTransactionList() {
         const txDiv = document.createElement('div');
         txDiv.className = 'transaction-entry';
 
-        const statusClass = tx.status === 'confirmed' ? 'tx-confirmed' : 'tx-pending';
+        // Determine status class based on transaction state
+        let statusClass;
+        if (tx.status === 'confirmed') {
+            statusClass = 'tx-confirmed';
+        } else if (tx.status === 'submitting' || tx.status === 'pending' || tx.status === 'ready') {
+            statusClass = 'tx-pending';
+        } else {
+            statusClass = 'tx-prepared';
+        }
+
         const typeClass = tx.type === 'deposit' ? 'tx-deposit' : 'tx-withdrawal';
 
         const date = new Date(tx.timestamp);
         const timeStr = date.toLocaleTimeString();
+
+        // Display hash or status message
+        const hashDisplay = tx.txHash
+            ? `<span class="tx-hash">${tx.txHash}</span>`
+            : '<span class="tx-hash-pending">Awaiting confirmation...</span>';
 
         txDiv.innerHTML = `
             <div class="tx-header">
@@ -230,7 +304,7 @@ function updateTransactionList() {
                 <span class="tx-status ${statusClass}">${tx.status}</span>
             </div>
             <div class="tx-details">
-                <div>Hash: <span class="tx-hash">${tx.txHash}</span></div>
+                <div>Hash: ${hashDisplay}</div>
                 <div>Time: ${timeStr}</div>
             </div>
         `;
