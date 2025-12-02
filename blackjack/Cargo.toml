@@ -1,6 +1,6 @@
 [package]
 name = "blackjack"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["N. E. Davis <neal@zorp.io>"]
 description = "A NockApp project"
@@ -10,22 +10,25 @@ name = "blackjack"
 path = "src/main.rs"
 
 [dependencies]
-# NockVM dependency
-nockapp = { git = "https://github.com/sigilante/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
-nockapp-grpc = { git = "https://github.com/nockchain/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
-nockvm = { git = "https://github.com/sigilante/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
-nockvm_macros = { git = "https://github.com/sigilante/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
-zkvm-jetpack = { git = "https://github.com/nockchain/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
-kernels = { git = "https://github.com/nockchain/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
+# NockVM dependency - using local paths for compatibility with tx_driver
+nockapp = { path = "/Users/neal/zorp/nada/open/crates/nockapp" }
+nockapp-grpc = { path = "/Users/neal/zorp/nada/open/crates/nockapp-grpc" }
+nockchain-wallet = { path = "/Users/neal/zorp/nada/open/crates/nockchain-wallet" }
+nockvm = { path = "/Users/neal/zorp/nada/open/crates/nockvm/rust/nockvm" }
+nockvm_macros = { path = "/Users/neal/zorp/nada/open/crates/nockvm/rust/nockvm_macros" }
+zkvm-jetpack = { path = "/Users/neal/zorp/nada/open/crates/zkvm-jetpack" }
+kernels = { path = "/Users/neal/zorp/nada/open/crates/kernels", features = ["wallet"] }
+tx_driver = { path = "/Users/neal/zorp/nada/open/crates/tx_driver" }
 
 # Common dependencies for NockApps
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
 anyhow = "1.0"
 bytes = "1.5.0"
-noun-serde = { git = "https://github.com/zorp-corp/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
-nockchain-types = { git = "https://github.com/zorp-corp/nockchain.git", rev = "040091fcf36bbe64bb40c84ce3c3651991b5ad70" }
+noun-serde = { path = "/Users/neal/zorp/nada/open/crates/noun-serde" }
+nockchain-types = { path = "/Users/neal/zorp/nada/open/crates/nockchain-types" }
 clap = "4.4.4"
+rustls = "0.23.0"
 tokio = { version = "1.32", features = [
   "fs",
   "io-util",

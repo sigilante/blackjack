@@ -104,6 +104,10 @@
       ::  Handle transaction driver response
       ~&  >>  "Received tx-driver response: {<u.tx-response>}"
       ?-    -.u.tx-response
+          %born
+        ~&  >>  "Transaction born event received"
+        [~ state]
+        ::
           %tx-sent
         ::  Transaction successfully sent
         ~&  >>  "Transaction sent with hash: {<tx-hash.u.tx-response>} for game: {<game-id.u.tx-response>}"
@@ -132,6 +136,7 @@
     ?~  sof-cau
       ~&  "cause incorrectly formatted!"
       ~&  now.input.ovum
+      ~&  >  ovum
       !!
     ::  Parse request into components.
     =/  [id=@ uri=@t =method:http headers=(list header:http) body=(unit octs:http)]
@@ -971,16 +976,14 @@
             ^-  (list effect:http)
             ~
           ::  Build the transaction effect
-          =/  tx-effect=effect:wt
-            %:  create-payout-effect:blackjack
-              game-id
-              wallet-pkh.u.config.state
-              u.private-key.u.config.state
-              player-pkh
-              amount
-            ==
-          ^-  (list effect:wt)
-          ~[tx-effect]
+          ^-  (list ?(effect:http effect:wt effect:txt))
+          :~  %:  create-payout-effect:blackjack
+                game-id
+                wallet-pkh.u.config.state
+                u.private-key.u.config.state
+                player-pkh
+                amount
+          ==  ==
         ==
       ==  :: end POST
     ==  :: end GET/POST

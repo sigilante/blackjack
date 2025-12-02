@@ -5,7 +5,8 @@
 /=  ztd  /common/ztd/three
 ::  Wallet imports (for transaction building)
 /=  transact      /common/tx-engine
-/=  tx-builder    /apps/wallet/lib/tx-builder-v1
+/=  tx-builder    /apps/wallet/lib/tx-builder
+/=  txt           /apps/tx/lib/types
 /=  wt            /apps/wallet/lib/types
 ::
 ::  blackjack/sur/blackjack.hoon
@@ -618,11 +619,11 @@
   ^-  effect:txt
   :*  %tx
       %send
-      src-pkh=src-pkh
-      src-privkey=src-privkey
-      src-first-name=(simple:v1:first-name:transact (from-b58:hash:transact src-pkh))
-      trg-pkh=trg-pkh
-      amount=amount
+      src-pkh=`@`src-pkh
+      src-privkey=`@`src-privkey
+      src-first-name=`*`(simple:v1:first-name:transact (from-b58:hash:transact src-pkh))
+      trg-pkh=`@`trg-pkh
+      amount=`@`amount
   ==
 ::
 ++  make-json-cashout-tx
@@ -665,7 +666,7 @@
 ::
 ++  create-payout-effect
   |=  [game-id=@t wallet-pkh=@t private-key=@t player-pkh=@t amount=@ud]
-  ^-  effect:wt
+  ^-  ?(effect:txt effect:wt)
   ::  Convert server PKH from base58 to hash
   =/  server-pkh-hash=hash:transact
     (from-b58:hash:transact wallet-pkh)
@@ -673,14 +674,14 @@
   =/  server-first-name=hash:transact
     (simple:v1:first-name:transact server-pkh-hash)
   ::  Build the transaction effect (including game-id for response tracking)
-  ^-  effect:wt
+  ^-  ?(effect:txt effect:wt)
   :*  %tx  %send
-      game-id
-      wallet-pkh
-      private-key
-      server-first-name
-      player-pkh
-      (scot %ud amount)
+      :: `@`game-id
+      `@`wallet-pkh
+      `@`private-key
+      `*`server-first-name
+      `@`player-pkh
+      `@`(scot %ud amount)
   ==
 ::
 +$  config-poke
@@ -697,7 +698,8 @@
 ::  NOTE: The tx_driver should include game-id context in the response
 ::  so we can update the correct session
 +$  tx-driver-cause
-  $%  [%tx-sent game-id=@t tx-hash=@t]
+  $%  [%born ~]
+      [%tx-sent game-id=@t tx-hash=@t]
       [%tx-fail game-id=@t error=@t]
   ==
 ::
