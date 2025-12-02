@@ -131,6 +131,19 @@
         [~ state]
       ==
     ::
+    ::  Check if this is a balance update from the Rust driver
+    =/  update-bank-response=(unit update-bank-cause:blackjack)
+      ((soft update-bank-cause:blackjack) cause.input.ovum)
+    ?^  update-bank-response
+      ::  Update the bank in all active sessions
+      =/  new-bank=@ud  p.u.update-bank-response
+      ~&  >>  "Received balance update: new bank = {<new-bank>}"
+      ::  Update config with new bank
+      =/  current-config=runtime-config:blackjack  (get-config state)
+      =/  updated-config=runtime-config:blackjack
+        current-config(initial-bank new-bank)
+      [~ state(config `updated-config)]
+    ::
     ::  Otherwise, parse as HTTP request
     =/  sof-cau=(unit cause:http)  ((soft cause:http) cause.input.ovum)
     ?~  sof-cau
@@ -308,6 +321,7 @@
         ~&  >>  "Matched route: GET /blackjack/api/sessions"
         ~&  >>>  "Total sessions in state: {<~(wyt by sessions.state)>}"
         ::  Extract session info from all sessions
+        ~&  >  sessions+[~(tap by sessions.state)]
         =/  session-list=(list [game-id=@t status=session-status:blackjack bank=@ud deals-made=@ud])
           %+  turn  ~(tap by sessions.state)
           |=  [gid=@t sess=session-state:blackjack]
@@ -517,10 +531,7 @@
         =/  updated-game=game-state-inner:blackjack
           ?:  busted
             ::  Calculate loss for busting (payout=0, so profit = 0 - bet = -bet)
-            =/  profit=@sd
-              =/  raw-profit=@s  (dif:si (sun:si 0) (sun:si current-bet.current-game))
-              ?:  (syn:si raw-profit)  raw-profit
-              (new:si %.n (abs:si raw-profit))
+            =/  profit=@sd  (dif:si (sun:si 0) (sun:si current-bet.current-game))
             =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
             current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand), current-bet 0, win-loss new-win-loss, game-in-progress %.n)
           current-game(deck remaining-deck, player-hand (snap player-hand.current-game 0 new-player-hand))
@@ -588,10 +599,7 @@
         ~&  >  "Win/loss: {<win-loss.current-game>}"
         ::
         ::  Calculate win/loss change (payout includes return of bet)
-        =/  profit=@sd
-          =/  raw-profit=@s  (dif:si (sun:si payout) (sun:si current-bet.current-game))
-          ?:  (syn:si raw-profit)  raw-profit
-          (new:si %.n (abs:si raw-profit))
+        =/  profit=@sd  (dif:si (sun:si payout) (sun:si current-bet.current-game))
         =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
         ::
         ::  Update game (clear bet when ending)
@@ -726,10 +734,7 @@
         =/  dealer-score=@ud  (hand-value:blackjack final-dealer-hand)
         ::
         ::  Calculate win/loss change (payout includes return of bet)
-        =/  profit=@sd
-          =/  raw-profit=@s  (dif:si (sun:si payout) (sun:si doubled-bet))
-          ?:  (syn:si raw-profit)  raw-profit
-          (new:si %.n (abs:si raw-profit))
+        =/  profit=@sd  (dif:si (sun:si payout) (sun:si doubled-bet))
         =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
         ::
         ::  Update game (clear bet when ending)
@@ -798,10 +803,7 @@
         =/  new-bank=@ud  (add bank.current-game half-bet)
         ::
         ::  Calculate win/loss change (lose half the bet)
-        =/  profit=@sd
-          =/  raw-profit=@s  (dif:si (sun:si half-bet) (sun:si current-bet.current-game))
-          ?:  (syn:si raw-profit)  raw-profit
-          (new:si %.n (abs:si raw-profit))
+        =/  profit=@sd  (dif:si (sun:si half-bet) (sun:si current-bet.current-game))
         =/  new-win-loss=@sd  (sum:si win-loss.current-game profit)
         ::
         ::  Update game state

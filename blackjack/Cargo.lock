@@ -607,6 +607,7 @@ dependencies = [
  "kernels",
  "nockapp",
  "nockapp-grpc",
+ "nockchain-libp2p-io",
  "nockchain-types",
  "nockchain-wallet",
  "nockvm",

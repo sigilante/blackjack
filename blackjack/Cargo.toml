@@ -14,6 +14,7 @@ path = "src/main.rs"
 nockapp = { path = "/Users/neal/zorp/nada/open/crates/nockapp" }
 nockapp-grpc = { path = "/Users/neal/zorp/nada/open/crates/nockapp-grpc" }
 nockchain-wallet = { path = "/Users/neal/zorp/nada/open/crates/nockchain-wallet" }
+nockchain-libp2p-io = { path = "/Users/neal/zorp/nada/open/crates/nockchain-libp2p-io" }
 nockvm = { path = "/Users/neal/zorp/nada/open/crates/nockvm/rust/nockvm" }
 nockvm_macros = { path = "/Users/neal/zorp/nada/open/crates/nockvm/rust/nockvm_macros" }
 zkvm-jetpack = { path = "/Users/neal/zorp/nada/open/crates/zkvm-jetpack" }

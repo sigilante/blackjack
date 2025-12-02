@@ -7,7 +7,14 @@
 confirmation_blocks = 3
 
 # Enable blockchain integration (set to false for testing without blockchain)
-enable_blockchain = false
+# When true: queries real balance from Nockchain gRPC on startup
+# When false: uses initial_bank value from [game] section
+enable_blockchain = true
+
+# Dry run mode for transactions (set to true for testing)
+# When true: builds and signs transactions but does NOT submit to network
+# When false: actually sends transactions to the blockchain
+dry_run = true
 
 [game]
 # Initial bank amount for new game sessions (in nicks)

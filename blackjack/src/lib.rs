@@ -34,6 +34,7 @@ pub struct ServerConfig {
 pub struct BlockchainConfig {
     pub confirmation_blocks: u64,
     pub enable_blockchain: bool,
+    pub dry_run: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -173,22 +174,117 @@ pub async fn init_with_config(
 }
 
 /// Update balance from Nockchain gRPC
-/// This would call the gRPC endpoints to get the server's current notes
-/// For now, this is a placeholder that would be implemented similar to the wallet's update_balance_grpc_private
+/// Queries the blockchain for the server's current balance and updates the kernel
 pub async fn update_balance_from_chain(
-    _nockapp: &mut NockApp,
-    _config: &BlackjackConfig,
+    nockapp: &mut NockApp,
+    config: &BlackjackConfig,
 ) -> Result<()> {
-    // TODO: Implement gRPC balance querying
-    // This would:
-    // 1. Connect to the gRPC endpoint from config
-    // 2. Query balance for server's wallet_pkh
-    // 3. Parse the response into a balance update noun
-    // 4. Poke it into the kernel with tag 'update-balance-grpc'
+    use nockapp::wire::{SystemWire, Wire};
+    use nockchain_libp2p_io::tip5_util::tip5_hash_to_base58;
+    use nockchain_types::common::Hash;
+    use nockchain_wallet::Wallet;
+    use nockapp_grpc::public_nockchain;
 
-    info!("Balance update from chain (not yet implemented)");
+    info!("Querying balance from Nockchain gRPC...");
+
+    // Parse the server's PKH
+    let server_hash = Hash::from_base58(&config.server.wallet_pkh)
+        .map_err(|e| anyhow::anyhow!("Failed to parse server wallet_pkh: {}", e))?;
+
+    // Convert PKH hash to first-name (it's just the hash itself as a noun)
+    use nockapp::noun::slab::NockJammer;
+    let mut slab: NounSlab<NockJammer> = NounSlab::new();
+    let first_name_noun = {
+        use noun_serde::NounEncode;
+        server_hash.to_noun(&mut slab)
+    };
+
+    // Convert first-name to base58 for logging
+    let first_name_b58 = tip5_hash_to_base58(first_name_noun)
+        .map_err(|e| anyhow::anyhow!("Failed to convert first-name to base58: {:?}", e))?;
+    info!("Querying balance for first-name: {}", first_name_b58);
+
+    // Connect to the gRPC endpoint
+    let mut client = public_nockchain::PublicNockchainGrpcClient::connect(config.grpc.endpoint.clone())
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to connect to Nockchain gRPC: {}", e))?;
+
+    info!("Connected to Nockchain gRPC at {}", config.grpc.endpoint);
+
+    // Query balance from blockchain
+    let pubkeys = Vec::new(); // No v0 pubkeys
+    let first_names = vec![first_name_b58.clone()];
+
+    let pokes = Wallet::update_balance_grpc_public(&mut client, pubkeys, first_names)
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to query balance from gRPC: {:?}", e))?;
+
+    info!("Received {} balance update pokes from gRPC", pokes.len());
+
+    // Calculate total balance from all pokes
+    let total_balance = calculate_total_balance(&pokes)?;
+    info!("Total balance for server PKH: {} nicks", total_balance);
+
+    // Update the blackjack kernel with the new balance
+    // Format: [%update-bank new-bank=@ud]
+    let mut update_slab = NounSlab::new();
+    let update_head = make_tas(&mut update_slab, "update-bank").as_noun();
+    let bank_amount = D(total_balance);
+    let update_noun = T(&mut update_slab, &[update_head, bank_amount]);
+    update_slab.set_root(update_noun);
+
+    // Poke the balance update into the kernel
+    let wire = SystemWire.to_wire();
+    nockapp
+        .poke(wire, update_slab)
+        .await
+        .map_err(|e| anyhow::anyhow!("Failed to poke balance update into kernel: {:?}", e))?;
+
+    info!("Successfully updated blackjack server balance to {} nicks", total_balance);
 
     Ok(())
+}
+
+/// Calculate total balance from balance update pokes
+fn calculate_total_balance(pokes: &[NounSlab]) -> Result<u64> {
+    use nockchain_types::tx_engine::v1::note::BalanceUpdate;
+    use noun_serde::NounDecode;
+
+    let mut total = 0u64;
+
+    for poke in pokes {
+        let root = unsafe { poke.root() };
+
+        // The poke structure is [%update-balance-grpc (unit (unit balance-update))]
+        let outer_cell = match root.as_cell()?.tail().as_cell() {
+            Ok(cell) => cell,
+            Err(_) => continue, // Null outer unit
+        };
+
+        let inner_cell = match outer_cell.tail().as_cell() {
+            Ok(cell) => cell,
+            Err(_) => continue, // Null inner unit
+        };
+
+        let balance_update_noun = inner_cell.tail();
+        let balance_update = BalanceUpdate::from_noun(&balance_update_noun)
+            .map_err(|e| anyhow::anyhow!("Failed to decode balance update: {:?}", e))?;
+
+        // Sum up all note values
+        for (_name, note) in balance_update.notes.0.iter() {
+            let value = match note {
+                nockchain_types::tx_engine::v1::note::Note::V0(v0_note) => {
+                    v0_note.tail.assets.0 as u64
+                }
+                nockchain_types::tx_engine::v1::note::Note::V1(v1_note) => {
+                    v1_note.assets.0 as u64
+                }
+            };
+            total += value;
+        }
+    }
+
+    Ok(total)
 }
 
 #[cfg(test)]
@@ -205,6 +301,7 @@ mod tests {
             blockchain: BlockchainConfig {
                 confirmation_blocks: 3,
                 enable_blockchain: false,
+                dry_run: true,
             },
             game: GameConfig {
                 initial_bank: 1000,
@@ -234,6 +331,7 @@ mod tests {
             blockchain: BlockchainConfig {
                 confirmation_blocks: 3,
                 enable_blockchain: true,
+                dry_run: false,
             },
             game: GameConfig {
                 initial_bank: 1000,

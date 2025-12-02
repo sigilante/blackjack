@@ -319,7 +319,7 @@
     ",\"bank\":"
     (a-co:co bank)
     ",\"winLoss\":"
-    (a-co:co win-loss)
+    (r-co:co (rlys (san:rs win-loss)))
   "}"
   ==
 ::
@@ -703,4 +703,7 @@
       [%tx-fail game-id=@t error=@t]
   ==
 ::
++$  update-bank-cause
+  $%  [%update-bank p=@ud]
+  ==
 --
