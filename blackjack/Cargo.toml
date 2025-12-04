@@ -13,6 +13,7 @@ path = "src/main.rs"
 # NockVM dependency - using local paths for compatibility with tx_driver
 nockapp = { path = "/Users/neal/zorp/nada/open/crates/nockapp" }
 nockapp-grpc = { path = "/Users/neal/zorp/nada/open/crates/nockapp-grpc" }
+nockchain-math = { path = "/Users/neal/zorp/nada/open/crates/nockchain-math" }
 nockchain-wallet = { path = "/Users/neal/zorp/nada/open/crates/nockchain-wallet" }
 nockchain-libp2p-io = { path = "/Users/neal/zorp/nada/open/crates/nockchain-libp2p-io" }
 nockvm = { path = "/Users/neal/zorp/nada/open/crates/nockvm/rust/nockvm" }

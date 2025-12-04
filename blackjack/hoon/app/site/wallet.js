@@ -47,6 +47,11 @@ async function loadServerPkh() {
             const data = await response.json();
             serverPkh = data.serverWalletPkh;
             document.getElementById('server-pkh').textContent = serverPkh;
+            // Update available balance from server
+            if (data.bank !== undefined) {
+                availableBalance = data.bank;
+                updateDisplay();
+            }
         }
     } catch (error) {
         console.error('Error loading server PKH:', error);

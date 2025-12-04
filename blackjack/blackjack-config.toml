@@ -26,8 +26,11 @@ max_history_entries = 20
 [grpc]
 # Nockchain gRPC endpoint for querying notes/balance
 # Used by Rust driver to sync wallet state
-endpoint = "http://127.0.0.1:50051"
+# Options:
+#   - Local node: "http://127.0.0.1:50051"
+#   - Public Nockchain: "https://nockchain-api.zorp.io"
+endpoint = "https://nockchain-api.zorp.io"
 
 # Whether to use private (authenticated) or public gRPC client
 # Options: "private", "public"
-client_type = "private"
+client_type = "public"

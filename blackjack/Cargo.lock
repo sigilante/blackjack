@@ -608,6 +608,7 @@ dependencies = [
  "nockapp",
  "nockapp-grpc",
  "nockchain-libp2p-io",
+ "nockchain-math",
  "nockchain-types",
  "nockchain-wallet",
  "nockvm",
@@ -1955,9 +1956,9 @@ checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
 
 [[package]]
 name = "gnort"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1033ebf8ca0e0a249d8996a5979dcfd276d43b2818cb6045993a844250c49516"
+checksum = "aef3660ec7d99e31b3d5481d5c2ea525934a38b18ca4d5a64bf53292cf9f1446"
 dependencies = [
  "dashmap",
  "derive_more",
@@ -1967,7 +1968,6 @@ dependencies = [
  "nonzero_ext",
  "once_cell",
  "thiserror 2.0.17",
- "tracing",
 ]
 
 [[package]]

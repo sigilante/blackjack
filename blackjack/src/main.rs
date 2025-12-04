@@ -21,6 +21,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let cli = boot::default_boot_cli(false);
     boot::init_default_tracing(&cli);
 
+    // Install default crypto provider before any TLS connections
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .expect("default provider already set elsewhere");
+
     // Load configuration from TOML file
     let config_path = "blackjack-config.toml";
     let config = match BlackjackConfig::load(config_path) {
@@ -92,10 +97,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     .map_err(|e| NockAppError::OtherError(format!("Kernel setup failed: {}", e)))?;
 
     let wallet = Wallet::new(wallet_kernel);
-
-    rustls::crypto::aws_lc_rs::default_provider()
-        .install_default()
-        .expect("default provider already set elsewhere");
 
     let args = tx_driver::Args::parse();
 

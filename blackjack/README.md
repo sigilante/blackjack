@@ -28,6 +28,12 @@ To run this project:
 nockup run blackjack
 ```
 
+To log output for developers, use:
+
+```bash
+RUST_LOG=debug,gnort=off nockup run blackjack
+```
+
 Or using cargo directly:
 
 ```bash

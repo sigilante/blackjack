@@ -6,7 +6,9 @@ use std::path::Path;
 use nockapp::noun::slab::NounSlab;
 use nockapp::utils::make_tas;
 use nockapp::NockApp;
+use nockchain_math::noun_ext::NounMathExt;
 use nockvm::noun::{Noun, D, T, YES, NO};
+use nockvm_macros::tas;
 use tracing::info;
 
 /// Configuration for the Blackjack server
@@ -187,22 +189,19 @@ pub async fn update_balance_from_chain(
 
     info!("Querying balance from Nockchain gRPC...");
 
-    // Parse the server's PKH
+    // Parse the server's PKH and convert to first-name noun
     let server_hash = Hash::from_base58(&config.server.wallet_pkh)
         .map_err(|e| anyhow::anyhow!("Failed to parse server wallet_pkh: {}", e))?;
 
-    // Convert PKH hash to first-name (it's just the hash itself as a noun)
-    use nockapp::noun::slab::NockJammer;
-    let mut slab: NounSlab<NockJammer> = NounSlab::new();
-    let first_name_noun = {
-        use noun_serde::NounEncode;
-        server_hash.to_noun(&mut slab)
-    };
+    info!("Parsed PKH hash: {}", server_hash.to_base58());
 
-    // Convert first-name to base58 for logging
-    let first_name_b58 = tip5_hash_to_base58(first_name_noun)
-        .map_err(|e| anyhow::anyhow!("Failed to convert first-name to base58: {:?}", e))?;
-    info!("Querying balance for first-name: {}", first_name_b58);
+    // Convert PKH to lock root hash (which serves as the first-name for querying)
+    // This uses tx_driver::create_simple_pkh_lock_root which creates a simple 1-of-1
+    // PKH spend condition and hashes it with TIP5
+    let first_name = tx_driver::create_simple_pkh_lock_root(&server_hash)
+        .map_err(|e| anyhow::anyhow!("Failed to create first-name from PKH: {}", e))?;
+
+    info!("Created first-name for query: {}", first_name.to_base58());
 
     // Connect to the gRPC endpoint
     let mut client = public_nockchain::PublicNockchainGrpcClient::connect(config.grpc.endpoint.clone())
@@ -213,7 +212,7 @@ pub async fn update_balance_from_chain(
 
     // Query balance from blockchain
     let pubkeys = Vec::new(); // No v0 pubkeys
-    let first_names = vec![first_name_b58.clone()];
+    let first_names = vec![first_name.to_base58()];
 
     let pokes = Wallet::update_balance_grpc_public(&mut client, pubkeys, first_names)
         .await
