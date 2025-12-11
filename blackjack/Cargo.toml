@@ -20,7 +20,7 @@ nockvm = { path = "/Users/neal/zorp/nada/open/crates/nockvm/rust/nockvm" }
 nockvm_macros = { path = "/Users/neal/zorp/nada/open/crates/nockvm/rust/nockvm_macros" }
 zkvm-jetpack = { path = "/Users/neal/zorp/nada/open/crates/zkvm-jetpack" }
 kernels = { path = "/Users/neal/zorp/nada/open/crates/kernels", features = ["wallet"] }
-tx_driver = { path = "/Users/neal/zorp/nada/open/crates/tx_driver" }
+tx-driver = { path = "/Users/neal/zorp/nada/open/crates/tx-driver" }
 
 # Common dependencies for NockApps
 serde = { version = "1.0", features = ["derive"] }

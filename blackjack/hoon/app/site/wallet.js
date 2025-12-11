@@ -141,7 +141,10 @@ async function mockCashOut() {
         return;
     }
 
-    setStatus(`Requesting cashout of ℕ${amount}...`);
+    // Check if dry-run is enabled
+    const dryRun = document.getElementById('dry-run-checkbox').checked;
+    const runMode = dryRun ? ' (DRY RUN)' : '';
+    setStatus(`Requesting cashout of ℕ${amount}${runMode}...`);
 
     try {
         // Call the cashout endpoint
@@ -151,7 +154,8 @@ async function mockCashOut() {
             body: JSON.stringify({
                 gameId: gameId,
                 playerPkh: destinationPkh,
-                amount: amount
+                amount: amount,
+                dryRun: dryRun
             })
         });
 
@@ -261,10 +265,24 @@ async function pollForTxHash(gameId, tx) {
     poll();
 }
 
+// Format nicks as Nocks with fractional nicks
+// 1 Nock = 65536 nicks (2^16)
+function formatBalance(nicks) {
+    // Handle undefined, null, or NaN values
+    if (nicks === undefined || nicks === null || isNaN(nicks)) {
+        return 'ℕ-𝕟-';
+    }
+
+    const NICKS_PER_NOCK = 65536;
+    const nocks = Math.floor(nicks / NICKS_PER_NOCK);
+    const remainingNicks = nicks % NICKS_PER_NOCK;
+    return `ℕ${nocks.toLocaleString()}𝕟${remainingNicks.toLocaleString()}`;
+}
+
 // Update display
 function updateDisplay() {
-    document.getElementById('available-balance').textContent = `ℕ${availableBalance}`;
-    document.getElementById('betting-pool').textContent = `ℕ${bettingPool}`;
+    document.getElementById('available-balance').textContent = formatBalance(availableBalance);
+    document.getElementById('betting-pool').textContent = formatBalance(bettingPool);
 }
 
 // Update transaction list

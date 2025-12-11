@@ -88,7 +88,7 @@ async function initGame() {
 
                 updateDisplay();
                 updateSessionInfo();
-                setStatus(`Resumed session ${gameId.substring(0, 8)}... (Bank: ℕ${gameState.bank})`);
+                setStatus(`Resumed session ${gameId.substring(0, 8)}... (Bank: ${formatBalance(gameState.bank)})`);
                 return;
             } else {
                 // Session no longer exists, clear it
@@ -275,16 +275,31 @@ document.addEventListener('mouseup', function(e) {
     }, 300); // Match transition duration
 });
 
+// Format nicks as Nocks with fractional nicks
+// 1 Nock = 65536 nicks (2^16)
+function formatBalance(nicks) {
+    // Handle undefined, null, or NaN values
+    if (nicks === undefined || nicks === null || isNaN(nicks)) {
+        return 'ℕ-𝕟-';
+    }
+
+    const NICKS_PER_NOCK = 65536;
+    const nocks = Math.floor(nicks / NICKS_PER_NOCK);
+    const remainingNicks = nicks % NICKS_PER_NOCK;
+    return `ℕ${nocks.toLocaleString()}𝕟${remainingNicks.toLocaleString()}`;
+}
+
 // Update the display
 function updateDisplay() {
     // Update bank and bet displays
-    document.getElementById('bank-amount').textContent = `ℕ${gameState.bank}`;
-    document.getElementById('current-bet').textContent = `ℕ${gameState.currentBet}`;
+    document.getElementById('bank-amount').textContent = formatBalance(gameState.bank);
+    document.getElementById('current-bet').textContent = formatBalance(gameState.currentBet);
 
     // Format win/loss with explicit sign
     const winLoss = gameState.winLoss;
-    const winLossText = winLoss > 0 ? `+${winLoss}` : `${winLoss}`;
-    document.getElementById('win-loss').textContent = `ℕ${winLossText}`;
+    const absWinLoss = Math.abs(winLoss);
+    const sign = winLoss > 0 ? '+' : (winLoss < 0 ? '-' : '');
+    document.getElementById('win-loss').textContent = `${sign}${formatBalance(absWinLoss)}`;
 
     // Update bet display
     updateBetDisplay();
@@ -303,16 +318,16 @@ function updateBetDisplay() {
         return;
     }
 
-    // Break down bet into chips (largest first)
+    // Break down bet into chips (largest first) - denominations in nicks (Nock × 65536)
     let remaining = gameState.currentBet;
-    const chipDenominations = [100, 50, 25, 10, 5, 1];
+    const chipDenominations = [6553600, 3276800, 1638400, 655360, 327680, 65536]; // 100, 50, 25, 10, 5, 1 Nocks in nicks
     const chipPositions = {
-        100: '-801px -525px',
-        50: '-756px -525px',
-        25: '-711px -525px',
-        10: '-801px -480px',
-        5: '-756px -480px',
-        1: '-711px -480px'
+        6553600: '-801px -525px',  // 100 Nocks
+        3276800: '-756px -525px',  // 50 Nocks
+        1638400: '-711px -525px',  // 25 Nocks
+        655360: '-801px -480px',   // 10 Nocks
+        327680: '-756px -480px',   // 5 Nocks
+        65536: '-711px -480px'     // 1 Nock
     };
 
     const chips = [];
@@ -393,7 +408,7 @@ function placeBet(amount) {
         document.getElementById('deal-btn').disabled = false;
     }
 
-    setStatus(`Bet placed: ℕ${gameState.currentBet}`);
+    setStatus(`Bet placed: ${formatBalance(gameState.currentBet)}`);
 }
 
 // Clear the current bet
@@ -666,7 +681,7 @@ async function stand() {
 
         // Display outcome
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
-        setStatus(`${outcomeMessage}! Payout: ℕ${data.payout}. Place a bet to play again.`);
+        setStatus(`${outcomeMessage}! Payout: ${formatBalance(data.payout)}. Place a bet to play again.`);
 
         // Reset for next round - clear bet but keep hands visible
         gameState.gameInProgress = false;
@@ -736,7 +751,7 @@ async function doubleDown() {
 
         // Display outcome
         const outcomeMessage = data.outcome.charAt(0).toUpperCase() + data.outcome.slice(1);
-        setStatus(`Doubled down! ${outcomeMessage}! Payout: ℕ${data.payout}. Place a bet to play again.`);
+        setStatus(`Doubled down! ${outcomeMessage}! Payout: ${formatBalance(data.payout)}. Place a bet to play again.`);
 
         // Reset for next round - clear bet but keep hands visible
         gameState.gameInProgress = false;
@@ -818,7 +833,7 @@ async function surrender() {
         gameState.gameInProgress = false;
 
         updateDisplay();
-        setStatus(`Surrendered. Payout: ℕ${data.payout}. Place a bet to play again.`);
+        setStatus(`Surrendered. Payout: ${formatBalance(data.payout)}. Place a bet to play again.`);
 
         // Disable action buttons
         document.getElementById('deal-btn').disabled = true;

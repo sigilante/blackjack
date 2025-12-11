@@ -317,9 +317,11 @@ body {
     cursor: pointer;
     transition: transform 0.1s;
     position: relative;
+    background-color: transparent;
     background-image: url('/blackjack/img/sprites.png');
     background-repeat: no-repeat;
     border: none;
+    padding: 0;
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
