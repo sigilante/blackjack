@@ -1,4 +1,4 @@
-::  blackjack/app/player.hoon
+::  blackjack/app/house.hoon
 ::  Browser-based blackjack game served as a NockApp
 ::
 /+  http, blackjack, txt=types

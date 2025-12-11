@@ -1,0 +1,58 @@
+[package]
+name = "blackjack"
+version = "0.2.0"
+edition = "2021"
+authors = ["N. E. Davis <neal@zorp.io>"]
+description = "A NockApp project"
+
+[[bin]]
+name = "blackjack"
+path = "src/main.rs"
+
+[dependencies]
+# NockVM dependency - using local paths for compatibility with tx_driver
+nockapp = { path = "/Users/neal/zorp/nada/open/crates/nockapp" }
+nockapp-grpc = { path = "/Users/neal/zorp/nada/open/crates/nockapp-grpc" }
+nockchain-math = { path = "/Users/neal/zorp/nada/open/crates/nockchain-math" }
+nockchain-wallet = { path = "/Users/neal/zorp/nada/open/crates/nockchain-wallet" }
+nockchain-libp2p-io = { path = "/Users/neal/zorp/nada/open/crates/nockchain-libp2p-io" }
+nockvm = { path = "/Users/neal/zorp/nada/open/crates/nockvm/rust/nockvm" }
+nockvm_macros = { path = "/Users/neal/zorp/nada/open/crates/nockvm/rust/nockvm_macros" }
+zkvm-jetpack = { path = "/Users/neal/zorp/nada/open/crates/zkvm-jetpack" }
+kernels = { path = "/Users/neal/zorp/nada/open/crates/kernels", features = ["wallet"] }
+tx-driver = { path = "/Users/neal/zorp/nada/open/crates/tx-driver" }
+
+# Common dependencies for NockApps
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
+anyhow = "1.0"
+bytes = "1.5.0"
+noun-serde = { path = "/Users/neal/zorp/nada/open/crates/noun-serde" }
+nockchain-types = { path = "/Users/neal/zorp/nada/open/crates/nockchain-types" }
+clap = "4.4.4"
+rustls = "0.23.0"
+tokio = { version = "1.32", features = [
+  "fs",
+  "io-util",
+  "macros",
+  "net",
+  "rt-multi-thread",
+  "rt",
+  "signal",
+  "tracing"
+] }
+tokio-util = "0.7.11"
+tracing = "0.1.41"
+tracing-core = "0.1"
+tracing-opentelemetry = { version = "0.31.0", features = ["metrics"] }
+tracing-subscriber = { version = "0.3.18", features = [
+    "ansi",
+    "env-filter",
+    "registry",
+] }
+tracing-test = "0.2.5"
+tracing-tracy = { version = "0.11.4" }
+tracy-client = { version = "0.18.2" }
+
+[build-dependencies]
+# Build script dependencies if needed

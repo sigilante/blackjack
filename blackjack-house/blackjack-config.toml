@@ -1,0 +1,36 @@
+# Blackjack NockApp Configuration
+# This config is loaded by the Rust driver and poked into the Hoon kernel on startup
+# NOTE: Sensitive server credentials (wallet_pkh, private_key) are in secrets.toml
+
+[blockchain]
+# Number of confirmations required for deposits (typically 3)
+confirmation_blocks = 3
+
+# Enable blockchain integration (set to false for testing without blockchain)
+# When true: queries real balance from Nockchain gRPC on startup
+# When false: uses initial_bank value from [game] section
+enable_blockchain = true
+
+# Dry run mode for transactions (set to true for testing)
+# When true: builds and signs transactions but does NOT submit to network
+# When false: actually sends transactions to the blockchain
+dry_run = true
+
+[game]
+# Initial bank amount for new game sessions (in nicks)
+initial_bank = 1000
+
+# Maximum number of hand history entries to keep per session
+max_history_entries = 20
+
+[grpc]
+# Nockchain gRPC endpoint for querying notes/balance
+# Used by Rust driver to sync wallet state
+# Options:
+#   - Local node: "http://127.0.0.1:50051"
+#   - Public Nockchain: "https://nockchain-api.zorp.io"
+endpoint = "https://nockchain-api.zorp.io"
+
+# Whether to use private (authenticated) or public gRPC client
+# Options: "private", "public"
+client_type = "public"

@@ -1,4 +1,5 @@
 .env
+*.jam
 .data.*
 /hoonc
 test-leader

@@ -1,0 +1,11 @@
+[project]
+name = "blackjack"
+version = "0.1.0"
+description = "A simple blackjack game"
+authors = ["Sigilante <neal@zorp.io>"]
+license = "MIT"
+repository = "https://github.com/sigilante/blackjack"
+homepage = "https://github.com/sigilante/blackjack"
+keywords = ["nockapp", "nockchain", "hoon"]
+edition = "2021"
+template = "http-server"
