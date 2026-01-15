@@ -2,7 +2,7 @@
 
 A [NockApp](https://github.com/nockchain/nockchain) blackjack game demonstrating NockApp application design principles.
 
-**Status**:  In active development as a demo.  The main gameplay is functional.  Nockchain integration is under way, based on the `tx_driver` release in Nockchain's main repo.
+**Status**:  Demo.  The main gameplay is functional.  Nockchain integration is based on the `tx_driver` release in Nockchain's main repo.  No active development is taking place in this repo as of ~2026.1.6.
 
 ![](./img/header.png)
 
